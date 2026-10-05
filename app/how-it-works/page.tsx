@@ -34,7 +34,7 @@ const steps = [
   },
   {
     title: "The number is capped",
-    body: "Feature agreement cannot display above 92%. An angled film cannot display a settled company above 62%. The notes under the list say \u201cper the literature\u201d and link the paper. That number is not a probability and not a sensitivity.",
+    body: "Feature agreement cannot display above 92%. An angled film cannot display a settled company above 62%. The notes under the list say “per the literature” and link the paper. That number is not a probability and not a sensitivity.",
   },
   {
     title: "Your labels teach the next version",
@@ -67,7 +67,7 @@ export default function HowItWorksPage() {
         <h2 className="font-heading text-2xl">Limits of a periapical</h2>
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
           Two dimensions collapse the connection. A Morse taper, an internal hex, and a tube-in-tube often look
-          like \u201csomething inside the body.\u201d Angulation exaggerates taper. A wide abutment imitates a tulip. This
+          like “something inside the body.” Angulation exaggerates taper. A wide abutment imitates a tulip. This
           bench would rather tie Straumann Bone Level with NobelParallel CC than pretend the CrossFit groove is
           visible. CBCT can add cross-sections later. It does not, by itself, name the brand.
         </p>
@@ -75,7 +75,7 @@ export default function HowItWorksPage() {
           <Link href="/library" className="text-brass hover:underline">
             Read the systems and their sources
           </Link>
-          <span className="text-muted-foreground"> \u00b7 </span>
+          <span className="text-muted-foreground"> · </span>
           <Link href="/about" className="text-brass hover:underline">
             Disclaimer
           </Link>
