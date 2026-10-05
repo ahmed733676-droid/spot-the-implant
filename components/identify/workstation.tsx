@@ -6,7 +6,6 @@ import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointer
 import { ConfidenceMeter } from "@/components/confidence-meter";
 import { Disclaimer } from "@/components/disclaimer";
 import { FixtureSchematic } from "@/components/schematic";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -97,7 +96,7 @@ export function Workstation() {
 
   const vision = useMemo(() => (raster ? analyzeRaster(raster, polarity) : null), [raster, polarity]);
   const result = useMemo(
-    () => rankSystems(observation, SYSTEMS, 5, vision?.cues ?? []),
+    () => rankSystems(observation, SYSTEMS, 2, vision?.cues ?? []),
     [observation, vision],
   );
 
@@ -208,7 +207,7 @@ export function Workstation() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="kicker">Identify</p>
-          <h1 className="mt-2 font-heading text-4xl tracking-tight sm:text-5xl">Read the fixture.</h1>
+          <h1 className="mt-2 font-heading text-4xl leading-[0.95] tracking-tight sm:text-5xl">Two companies from one film.</h1>
         </div>
         <ol className="flex flex-wrap gap-2">
           {STEPS.map((step, index) => {
@@ -220,10 +219,10 @@ export function Workstation() {
                   type="button"
                   disabled={!enabled || (index > 0 && !imageUrl)}
                   onClick={() => enabled && setStage(step.id)}
-                  className={`min-h-10 rounded-full border px-3 text-sm ${
+                  className={`min-h-10 border px-3 text-sm ${
                     step.id === stage
-                      ? "border-brass bg-brass text-primary-foreground"
-                      : "border-border text-muted-foreground disabled:opacity-40"
+                      ? "border-foreground bg-foreground text-background"
+                      : "border-foreground/20 text-muted-foreground disabled:opacity-40"
                   }`}
                 >
                   {index + 1} {step.label}
@@ -375,12 +374,12 @@ function UploadStage({
         }`}
       >
         <p className="kicker">Periapical or one CBCT frame</p>
-        <p className="mt-3 max-w-md font-heading text-3xl text-bone">Drop the film. It stays on this device.</p>
+        <p className="mt-3 max-w-md font-heading text-4xl leading-none text-bone">Drop the film. It stays on this device.</p>
         <p className="mt-3 max-w-md text-sm leading-relaxed text-bone/70">
           JPEG, PNG, WebP, or a DICOM file. Crop to the fixture on the next step. Include a collar if the implant
           is tissue level.
         </p>
-        <Button type="button" className="mt-6 h-11 px-5" disabled={busy} onClick={() => inputRef.current?.click()}>
+        <Button type="button" className="mt-6 h-11 bg-brass px-5 text-film hover:bg-brass/90" disabled={busy} onClick={() => inputRef.current?.click()}>
           {busy ? "Reading…" : "Choose a file"}
         </Button>
         <input
@@ -395,21 +394,21 @@ function UploadStage({
           }}
         />
       </div>
-      <aside className="rounded-lg border border-border bg-card p-5">
-        <h2 className="font-heading text-2xl">No film yet?</h2>
-        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+      <aside className="border-t border-foreground/15 pt-2 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-6">
+        <h2 className="font-heading text-3xl leading-none">No film yet</h2>
+        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
           Walk the crop and the cues on a labeled schematic. These are drawings, not radiographs.
         </p>
-        <div className="mt-4 flex flex-col gap-2">
-          <Button type="button" variant="outline" className="h-11 justify-start" onClick={() => onSchematic("straumann-tl")}>
-            Tissue-level tulip schematic
-          </Button>
-          <Button type="button" variant="outline" className="h-11 justify-start" onClick={() => onSchematic("megagen-anyridge")}>
-            Knife-thread schematic
-          </Button>
+        <div className="mt-5 flex flex-col">
+          <button type="button" className="border-t border-foreground/15 py-3 text-left text-sm hover:text-brass" onClick={() => onSchematic("straumann-tl")}>
+            Tissue-level tulip
+          </button>
+          <button type="button" className="border-y border-foreground/15 py-3 text-left text-sm hover:text-brass" onClick={() => onSchematic("megagen-anyridge")}>
+            Knife-thread, MegaGen
+          </button>
         </div>
         <p className="mt-4 text-sm text-muted-foreground">
-          Or <Link href="/library" className="text-brass hover:underline">browse the library</Link> and open any system on the bench.
+          Or <Link href="/library" className="text-brass underline underline-offset-4">browse the library</Link> and open any system on the bench.
         </p>
       </aside>
     </div>
@@ -529,7 +528,7 @@ function CropStage({
         </p>
         <p
           className={`mt-4 rounded-md border px-3 py-2 text-sm leading-relaxed ${
-            advice.tone === "ready" ? "border-border text-muted-foreground" : "border-brass/50 text-bone"
+            advice.tone === "ready" ? "border-foreground/15 text-muted-foreground" : "border-brass text-foreground"
           }`}
         >
           <span className="font-medium text-brass">{advice.title}. </span>
@@ -641,8 +640,8 @@ function CueStage({
                 onClick={() => onGeometry(value)}
                 className={`min-h-11 rounded-md border px-3 text-sm ${
                   observation.geometry === value
-                    ? "border-brass bg-brass/15 text-foreground"
-                    : "border-border text-muted-foreground"
+                    ? "border-foreground bg-foreground text-background"
+                    : "border-foreground/20 text-muted-foreground"
                 }`}
               >
                 {label}
@@ -680,12 +679,12 @@ function CueStage({
                         title={choice.hint}
                         onClick={() => onChange(feature, choice.value)}
                         className={`min-h-11 rounded-md border px-3 text-left text-sm ${
-                          active ? "border-brass bg-brass/15 text-foreground" : "border-border text-muted-foreground"
+                          active ? "border-foreground bg-foreground text-background" : "border-foreground/20 text-muted-foreground"
                         }`}
                       >
                         {choice.label}
                         {active && fromImage[feature] && choice.value !== "unknown" ? (
-                          <span className="ml-2 font-mono text-[10px] tracking-wide text-brass">IMAGE</span>
+                          <span className="ml-2 font-mono text-[10px] text-background/80">IMAGE</span>
                         ) : null}
                       </button>
                     );
@@ -766,11 +765,11 @@ function ResultStage({
         </p>
       ) : null}
       {result.clusterNote ? (
-        <p className="mt-4 rounded-md border border-border bg-card px-4 py-3 text-sm leading-relaxed">{result.clusterNote}</p>
+        <p className="mt-4 border-l-2 border-brass pl-4 text-sm leading-relaxed">{result.clusterNote}</p>
       ) : null}
       {result.literature.length > 0 ? (
-        <section className="mt-4 rounded-lg border border-brass/40 bg-card px-4 py-3">
-          <h2 className="font-mono text-[11px] tracking-widest text-brass uppercase">Per the literature</h2>
+        <section className="mt-4 border-t border-foreground/15 pt-4">
+          <h2 className="font-mono text-[11px] text-brass">Per the literature</h2>
           <ul className="mt-2 space-y-3">
             {result.literature.map((note) => (
               <li key={note.text} className="text-sm leading-relaxed">
@@ -784,142 +783,141 @@ function ResultStage({
         </section>
       ) : null}
       {result.noEvidence ? (
-        <div className="mt-6 rounded-lg border border-dashed border-border px-4 py-10 text-center">
-          <p className="font-heading text-3xl">No cues, no ranking.</p>
+        <div className="mt-6 border border-dashed border-foreground/25 px-4 py-12 text-center">
+          <p className="font-heading text-4xl leading-none">No cues, no ranking.</p>
           <Button type="button" className="mt-4 h-11" onClick={onBack}>
             Go back and mark what you see
           </Button>
         </div>
       ) : (
         <>
-        <p className="mt-6 text-sm text-muted-foreground">
-          The rank is the company. A line is named only when these cues separate it inside that company.
+        <p className="mt-6 max-w-xl text-sm text-muted-foreground">
+          {result.flat
+            ? "Two names from a tie. This is not a ranking. The note above says who else fits the same cues."
+            : "Two companies. A line is named only when these cues separate it inside that company."}
         </p>
-        <ol className="mt-4 space-y-4" aria-live="polite">
-          {result.brands.map((brand, index) => {
+        {cropUrl ? (
+          <figure className="film mt-5 w-fit p-2">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={cropUrl} alt="Your crop beside the short list" className="h-36 w-auto object-contain" />
+            <figcaption className="mt-1 font-mono text-[11px] text-phosphor">Your crop</figcaption>
+          </figure>
+        ) : null}
+        <ol className="mt-6 grid gap-10 lg:grid-cols-2" aria-live="polite">
+          {result.brands.slice(0, 2).map((brand, index) => {
             const lead = brand.systems[0];
             if (!lead) return null;
+            const status = result.flat
+              ? "Same evidence"
+              : index > 0
+                ? "Also possible"
+                : !brand.companySettled
+                  ? "Company unsettled"
+                  : !brand.lineSettled
+                    ? "Company only"
+                    : result.evidence === "supported"
+                      ? "Clearer agreement"
+                      : result.evidence === "partial"
+                        ? "Partial"
+                        : "Thin evidence";
             return (
-              <li
-                key={brand.company}
-                className={`grid gap-4 rounded-lg border bg-card p-4 md:grid-cols-[180px_1fr] ${
-                  result.flat || index > 0 ? "border-border" : "border-brass/60"
-                }`}
-              >
-                <div className={brand.systems.length > 1 ? "grid grid-cols-2 gap-2" : ""}>
-                  {brand.systems.slice(0, 2).map((row) => (
-                    <div key={row.system.id}>
-                      <FixtureSchematic profile={row.system.schematic} className="h-44 w-full rounded-md" />
-                      <p className="mt-1 truncate text-center text-[11px] text-muted-foreground">{lineCaption(row.system)}</p>
-                    </div>
-                  ))}
-                  {cropUrl && index === 0 ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={cropUrl}
-                      alt="Your crop beside the leading schematic"
-                      className="col-span-full mt-1 h-28 w-full rounded-md object-contain film"
-                    />
-                  ) : null}
+              <li key={brand.company} className="border-t-2 border-foreground pt-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-mono text-xs text-brass">
+                      {result.flat ? "Same evidence" : `0${index + 1}`}
+                    </p>
+                    <h2 className="font-heading text-4xl leading-none">{brand.company}</h2>
+                    {brand.manufacturer ? (
+                      <p className="mt-1 text-sm text-muted-foreground">Manufacturer · {brand.manufacturer}</p>
+                    ) : null}
+                  </div>
+                  <p className="font-mono text-[11px] text-brass">{status}</p>
                 </div>
-                <div>
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <p className="font-mono text-xs text-brass">
-                        {result.flat ? "Same evidence" : `0${index + 1} · company`}
-                      </p>
-                      <h2 className="font-heading text-4xl leading-none">{brand.company}</h2>
-                      {brand.manufacturer ? (
-                        <p className="mt-1 text-sm text-muted-foreground">Manufacturer · {brand.manufacturer}</p>
-                      ) : null}
-                      <p className="mt-2 text-sm text-bone/80">
-                        {result.flat
-                          ? "Line not called. Same generic cues."
-                          : brand.lineSettled
-                            ? `Line: ${lineCaption(lead.system)}`
-                            : `Line not settled: ${brand.systems.map((row) => lineCaption(row.system)).join(" · ")}`}
-                      </p>
-                    </div>
-                    <Badge variant="outline">
-                      {result.flat
-                        ? "Same evidence"
+                <p className="mt-2 text-sm text-foreground/80">
+                  {result.flat
+                    ? "Line not called. Same generic cues."
+                    : brand.lineSettled
+                      ? `Line: ${lineCaption(lead.system)}`
+                      : `Line not settled: ${brand.systems.map((row) => lineCaption(row.system)).join(" · ")}`}
+                </p>
+                <div className="mt-4 max-w-sm">
+                  <ConfidenceMeter
+                    confidence={brand.confidence}
+                    prominent={index === 0}
+                    caption={
+                      result.flat
+                        ? "not a ranking"
                         : index > 0
-                          ? "Also possible"
-                          : !brand.companySettled
-                            ? "Company unsettled"
-                            : !brand.lineSettled
-                              ? "Company only"
-                              : result.evidence === "supported"
-                                ? "Clearer agreement"
-                                : result.evidence === "partial"
-                                  ? "Partial"
-                                  : "Thin evidence"}
-                    </Badge>
-                  </div>
-                  <div className="mt-3 max-w-sm">
-                    <ConfidenceMeter
-                      confidence={brand.confidence}
-                      prominent={index === 0}
-                      caption={
-                        result.flat
-                          ? "not a ranking"
-                          : index > 0
-                            ? brand.confidence + 0.005 < (result.brands[0]?.confidence ?? 1)
-                              ? "lower on these cues"
-                              : "same cap on these cues"
-                            : brand.companySettled
-                              ? "company agreement"
-                              : "company unsettled"
-                      }
-                    />
-                  </div>
-                  <p className="mt-4 text-sm leading-relaxed">{brand.why}</p>
-                  {brand.whyNot.length > 0 ? (
-                    <div className="mt-3">
-                      <p className="text-xs tracking-wide text-muted-foreground uppercase">Why it may be wrong</p>
-                      <ul className="mt-1 space-y-1 text-sm leading-relaxed text-muted-foreground">
-                        {brand.whyNot.map((line) => (
-                          <li key={line}>{line}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  ) : null}
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {lead.matches.map((match) => (
-                      <Badge key={match.feature} variant="secondary">
-                        {match.phrase}
-                        {match.source === "vision" ? " · image" : ""}
-                      </Badge>
+                          ? brand.confidence + 0.005 < (result.brands[0]?.confidence ?? 1)
+                            ? "lower on these cues"
+                            : "same cap on these cues"
+                          : brand.companySettled
+                            ? "company agreement"
+                            : "company unsettled"
+                    }
+                  />
+                </div>
+                <div className="mt-4 grid grid-cols-[5.5rem_1fr] gap-3">
+                  <div className={brand.systems.length > 1 ? "space-y-2" : ""}>
+                    {brand.systems.slice(0, 2).map((row) => (
+                      <FixtureSchematic
+                        key={row.system.id}
+                        profile={row.system.schematic}
+                        title={`${lineCaption(row.system)} schematic, not a radiograph`}
+                        className="h-32 w-full"
+                      />
                     ))}
                   </div>
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    <Button type="button" className="h-11" onClick={() => onMarkCompany(brand.company)}>
-                      This is the company I see
-                    </Button>
-                    {brand.lineSettled ? (
-                      <Button type="button" variant="outline" className="h-11" onClick={() => onMarkLine(lead.system.id)}>
-                        This line: {lead.system.system}
-                      </Button>
-                    ) : (
-                      brand.systems.map((row) => (
-                        <Button
-                          key={row.system.id}
-                          type="button"
-                          variant="outline"
-                          className="h-11"
-                          onClick={() => onMarkLine(row.system.id)}
-                        >
-                          Line: {row.system.system}
-                        </Button>
-                      ))
-                    )}
-                    <Link
-                      href={`/library/${lead.system.id}`}
-                      className="inline-flex h-11 items-center px-2 text-sm text-brass hover:underline"
-                    >
-                      Open in the library
-                    </Link>
+                  <div>
+                    <p className="text-sm leading-relaxed">{brand.why}</p>
+                    {brand.whyNot.length > 0 ? (
+                      <div className="mt-3">
+                        <p className="font-mono text-[11px] text-brass">Why it may be wrong</p>
+                        <ul className="mt-1 space-y-1 text-sm leading-relaxed text-muted-foreground">
+                          {brand.whyNot.map((line) => (
+                            <li key={line}>{line}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    ) : null}
+                    <ul className="mt-3 space-y-1 font-mono text-[11px] text-muted-foreground">
+                      {lead.matches.map((match) => (
+                        <li key={match.feature}>
+                          {match.phrase}
+                          {match.source === "vision" ? " · image" : ""}
+                        </li>
+                      ))}
+                    </ul>
                   </div>
+                </div>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <Button type="button" className="h-11" onClick={() => onMarkCompany(brand.company)}>
+                    This is the company I see
+                  </Button>
+                  {brand.lineSettled ? (
+                    <Button type="button" variant="outline" className="h-11" onClick={() => onMarkLine(lead.system.id)}>
+                      This line: {lead.system.system}
+                    </Button>
+                  ) : (
+                    brand.systems.map((row) => (
+                      <Button
+                        key={row.system.id}
+                        type="button"
+                        variant="outline"
+                        className="h-11"
+                        onClick={() => onMarkLine(row.system.id)}
+                      >
+                        Line: {row.system.system}
+                      </Button>
+                    ))
+                  )}
+                  <Link
+                    href={`/library/${lead.system.id}`}
+                    className="inline-flex h-11 items-center px-2 text-sm text-brass underline underline-offset-4"
+                  >
+                    Open in the library
+                  </Link>
                 </div>
               </li>
             );

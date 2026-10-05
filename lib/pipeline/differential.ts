@@ -218,7 +218,7 @@ export function differentiate(input: {
   const tiedGroups = ordered.filter((group) => leader.rankScore - group[0].rankScore < 0.02);
   const flat = !anyDistinctive && tiedGroups.length >= 3;
 
-  const draft: (RankedBrand & { rankScore: number })[] = ordered.slice(0, 5).map((entries, index) => {
+  const draft: (RankedBrand & { rankScore: number })[] = ordered.map((entries, index) => {
     const best = entries[0];
     const identity = identityOf(best.system);
     const nextGroup = ordered[index + 1] ?? [];
@@ -360,7 +360,7 @@ export function differentiate(input: {
   monotonic(draft);
   monotonic(presented);
 
-  const brands: RankedBrand[] = draft.map((brand) => withoutScore(brand));
+  const brands: RankedBrand[] = draft.slice(0, Math.max(1, limit)).map((brand) => withoutScore(brand));
   const ranked: RankedSystem[] = presented.slice(0, limit).map((row) => withoutScore(row));
 
   return {

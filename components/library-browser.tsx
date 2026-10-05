@@ -64,13 +64,13 @@ export function LibraryBrowser() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
-      <p className="kicker">Reference library</p>
+      <p className="kicker">Library</p>
       <div className="mt-3 flex flex-col justify-between gap-4 md:flex-row md:items-end">
-        <h1 className="max-w-xl font-heading text-5xl leading-none tracking-tight">
-          {SYSTEMS.length} systems, drawn as schematics.
+        <h1 className="max-w-xl font-heading text-5xl leading-[0.92] tracking-tight sm:text-6xl">
+          {SYSTEMS.length} systems. <span className="italic text-brass">No borrowed films.</span>
         </h1>
         <p className="max-w-sm text-sm leading-relaxed text-muted-foreground">
-          Filter by what you can see. Open a card for the sources, the look-alikes, and a walkthrough on the bench.
+          Filter by what you can see. Open a row for the sources, the look-alikes, and a walkthrough on the bench.
         </p>
       </div>
 
@@ -89,8 +89,7 @@ export function LibraryBrowser() {
               value={brand}
               onChange={(event) => setBrand(event.target.value)}
               aria-label="Company"
-              className="h-11 w-full rounded-lg border border-input bg-card px-3 text-sm text-foreground"
-              style={{ colorScheme: "dark" }}
+              className="h-11 w-full border border-foreground/20 bg-background px-3 text-sm text-foreground"
             >
               <option value="all">All companies</option>
               {companies().map((name) => (
@@ -111,11 +110,12 @@ export function LibraryBrowser() {
       </p>
 
       {results.length === 0 ? (
-        <div className="mt-6 rounded-lg border border-dashed border-border px-4 py-12 text-center">
-          <p className="font-heading text-2xl">Nothing in the library matches that filter.</p>
+        <div className="mt-8 border border-dashed border-foreground/25 px-4 py-14 text-center">
+          <p className="font-heading text-4xl leading-none">Nothing matches that filter.</p>
+          <p className="mt-3 text-sm text-muted-foreground">Try another neck, or clear the search.</p>
           <button
             type="button"
-            className="mt-3 text-sm text-brass hover:underline"
+            className="mt-4 text-sm text-brass underline underline-offset-4"
             onClick={() => {
               setQuery("");
               setBrand("all");
@@ -128,22 +128,22 @@ export function LibraryBrowser() {
           </button>
         </div>
       ) : (
-        <ul className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="mt-6 border-t border-foreground/15">
           {results.map((system) => (
-            <li key={system.id}>
+            <li key={system.id} className="border-b border-foreground/15">
               <Link
                 href={`/library/${system.id}`}
-                className="flex h-full gap-3 rounded-lg border border-border bg-card p-3 transition-colors hover:border-brass/50"
+                className="grid grid-cols-[5.5rem_1fr] gap-4 py-4 hover:bg-secondary/70 sm:grid-cols-[7.5rem_14rem_1fr] sm:items-center"
               >
-                <FixtureSchematic profile={system.schematic} className="h-36 w-24 shrink-0 rounded-md" />
-                <span className="min-w-0">
-                  <span className="block font-heading text-2xl leading-tight">{identityOf(system).company}</span>
-                  <span className="mt-1 block text-sm text-bone/80">{system.system}</span>
+                <FixtureSchematic profile={system.schematic} className="h-28 w-full sm:h-32" />
+                <span className="min-w-0 sm:col-span-1">
+                  <span className="block font-heading text-3xl leading-none">{identityOf(system).company}</span>
+                  <span className="mt-1 block text-sm">{system.system}</span>
                   {identityOf(system).manufacturer ? (
-                    <span className="mt-1 block text-xs text-muted-foreground">{identityOf(system).manufacturer}</span>
+                    <span className="mt-1 block font-mono text-[11px] text-muted-foreground">{identityOf(system).manufacturer}</span>
                   ) : null}
-                  <span className="mt-2 block text-sm leading-snug text-muted-foreground">{system.lookFor[0]}</span>
                 </span>
+                <span className="col-span-2 text-sm leading-snug text-muted-foreground sm:col-span-1">{system.lookFor[0]}</span>
               </Link>
             </li>
           ))}
@@ -166,9 +166,7 @@ function ChipRow<T extends string>({
 }) {
   return (
     <div className="flex flex-col gap-2 sm:flex-row sm:items-start">
-      <span className="w-16 shrink-0 pt-2 font-mono text-[11px] tracking-widest text-muted-foreground uppercase">
-        {label}
-      </span>
+      <span className="w-16 shrink-0 pt-2 font-mono text-[11px] text-brass">{label}</span>
       <div className="flex flex-wrap gap-2">
         {options.map((option) => {
           const active = option.value === value;
@@ -178,10 +176,10 @@ function ChipRow<T extends string>({
               type="button"
               aria-pressed={active}
               onClick={() => onChange(option.value)}
-              className={`min-h-10 rounded-full border px-3 text-sm ${
+              className={`min-h-10 border px-3 text-sm ${
                 active
-                  ? "border-brass bg-brass text-primary-foreground"
-                  : "border-border text-muted-foreground hover:border-brass/40 hover:text-foreground"
+                  ? "border-foreground bg-foreground text-background"
+                  : "border-foreground/15 text-muted-foreground hover:border-foreground hover:text-foreground"
               }`}
             >
               {option.label}

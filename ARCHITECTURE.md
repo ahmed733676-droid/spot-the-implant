@@ -26,6 +26,8 @@ Spot the Implant is a Next.js app. Identification runs entirely in the browser. 
 
 **Generic cues are not a ranking.** Mild taper, a parallel body, a standard thread, a rounded apex, a bone-level collar, and a single lead do not belong to one company. When no distinctive cue is present and three or more companies tie, the result is `flat`. The screen says this is not a ranking, badges every card “Same evidence,” and the note names Ankylos and MegaGen as members of that shared set. Alphabetical order is not a winner.
 
+**The short list is two companies.** `rankSystems` returns two brands. Honesty flags are computed on the full differential first — twins, the flat band, the open line — and only then is the list cut. On a flat tie both rows are badged as the same evidence, and the note still names Ankylos and MegaGen when they share that tie, plus how many other companies fit. Cards three through five are not rendered. Alphabetical order is not a company call.
+
 **Percents stay in rank order.** Near-ties (rank gap under 0.02) share one displayed percent. A later row never displays a higher percent than the row above it. The old leader-only gap penalty is gone.
 
 **What did not change.** The 92% cap, the 34% cap under two hard cues, the 55% twin cap, the 80% cap when the company is ahead but the line is open, and the refusal to call the company on an angled film. This is still decision support. It is not a sensitivity and not a clearance.

@@ -1,6 +1,6 @@
 # Spot the Implant
 
-What’s my implant? is a decision-support bench for dentists and prosthodontists. You crop a periapical radiograph or a single CBCT frame, confirm the radiographic cues you can actually see, and get a ranked short list of **implant companies** — Straumann, Nobel Biocare, Osstem, and the rest — with a reason and a doubt. The catalog line is shown only when those cues can separate it.
+What’s my implant? is a decision-support bench for dentists and prosthodontists. You crop a periapical radiograph or a single CBCT frame, confirm the radiographic cues you can actually see, and get **two implant companies** — with a reason, a doubt, and a refusal when the film cannot split them. The catalog line is shown only when those cues can separate it.
 
 It is not a medical device. It is not FDA-cleared, not CE-marked, and not a diagnosis. Feature agreement is capped at **92%** and is not a probability.
 
@@ -48,7 +48,7 @@ Ahmed, or anyone with two known fixtures:
 2. Identify → upload the first periapical as JPEG or PNG (or DICOM, if the viewer can save an uncompressed or JPEG frame). The file stays in the browser.
 3. Crop to the fixture, including a tissue-level collar if there is one. Exclude the crown.
 4. Leave any cue you cannot defend as **Not sure**. An image suggestion already counts as a soft cue. Accept it if you agree, or pick another value to replace it.
-5. Read the company at the top of the short list and the “why it may be wrong” lines. Mark **This is the company I see**, or **None of these** and pick the company you know was placed. Use the line button only when you also know the generation.
+5. Read the two companies and the “why it may be wrong” lines. Mark **This is the company I see**, or **None of these** and pick the company you know was placed. Use the line button only when you also know the generation.
 6. Repeat with a second film, preferably a different design family (for example one tissue-level and one tapered bone-level).
 7. On the results step, **Export JSON**. That file is the label set. It does not contain the radiograph.
 

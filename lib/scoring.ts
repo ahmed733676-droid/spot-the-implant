@@ -24,7 +24,7 @@ export const CONFIDENCE_CAP = 0.92;
 export function rankSystems(
   observation: Observation,
   systems: ImplantSystem[] = SYSTEMS,
-  limit = 5,
+  limit = 2,
   vision: readonly VisionCue[] = [],
 ): RankResult {
   const cues = extractEvidence(observation, vision);

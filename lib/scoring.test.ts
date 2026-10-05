@@ -395,6 +395,7 @@ describe("rankSystems", () => {
     expect(result.clusterNote).toMatch(/not a ranking|not called/i);
     expect(result.clusterNote).toMatch(/Ankylos/);
     expect(result.clusterNote).toMatch(/MegaGen/);
+    expect(result.brands).toHaveLength(2);
     const percents = result.brands.map((brand) => agreementPercent(brand.confidence));
     expect(new Set(percents).size).toBe(1);
     for (let i = 1; i < percents.length; i++) {
@@ -410,6 +411,7 @@ describe("rankSystems", () => {
         thread: "knife",
       }),
     );
+    expect(result.brands).toHaveLength(2);
     expect(result.brands[0]?.company).toBe("MegaGen");
     expect(result.brands[0]?.company).not.toBe("Ankylos");
     expect(result.ranked[0]?.system.id).not.toBe("ankylos");
@@ -438,7 +440,7 @@ describe("rankSystems", () => {
   });
 
   it("feeds a soft image knife cue into the same company differential", () => {
-    const result = rankSystems(observe({ body: "mild-taper" }), SYSTEMS, 5, [
+    const result = rankSystems(observe({ body: "mild-taper" }), SYSTEMS, 2, [
       {
         feature: "thread",
         value: "knife",
@@ -446,6 +448,7 @@ describe("rankSystems", () => {
         note: "Deep repeated blades.",
       },
     ]);
+    expect(result.brands).toHaveLength(2);
     expect(result.brands[0]?.company).toBe("MegaGen");
     expect(result.brands[0]?.companySettled).toBe(false);
     expect(result.brands[0]?.confidence).toBeLessThanOrEqual(0.34);

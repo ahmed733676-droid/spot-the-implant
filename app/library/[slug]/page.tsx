@@ -38,7 +38,7 @@ export default async function SystemPage({ params }: { params: Promise<{ slug: s
       <p className="kicker">{identityOf(system).company}</p>
       <div className="mt-3 grid gap-8 lg:grid-cols-[280px_1fr] lg:items-start">
         <div>
-          <div className="film rounded-lg p-3">
+          <div className="film p-3">
             <FixtureSchematic profile={system.schematic} guides className="h-[420px] w-full" />
           </div>
           <p className="mt-2 text-xs text-muted-foreground">
@@ -46,7 +46,7 @@ export default async function SystemPage({ params }: { params: Promise<{ slug: s
           </p>
         </div>
         <div>
-          <h1 className="font-heading text-5xl leading-none tracking-tight">{system.system}</h1>
+          <h1 className="font-heading text-5xl leading-[0.92] tracking-tight sm:text-6xl">{system.system}</h1>
           {identityOf(system).manufacturer ? (
             <p className="mt-2 text-sm text-muted-foreground">Manufacturer · {identityOf(system).manufacturer}</p>
           ) : null}
@@ -85,7 +85,7 @@ export default async function SystemPage({ params }: { params: Promise<{ slug: s
         </section>
         <section>
           <h2 className="font-heading text-2xl">Checklist values</h2>
-          <dl className="mt-3 divide-y divide-border rounded-md border border-border">
+          <dl className="mt-3 divide-y divide-foreground/15 border-y border-foreground/15">
             {FEATURE_KEYS.map((feature) => (
               <div key={feature} className="grid grid-cols-[9rem_1fr] gap-3 px-3 py-2 text-sm">
                 <dt className="text-muted-foreground">{FEATURE_LABEL[feature]}</dt>
@@ -101,7 +101,7 @@ export default async function SystemPage({ params }: { params: Promise<{ slug: s
           <h2 className="font-heading text-2xl">Not separable on one periapical</h2>
           <div className="mt-3 flex flex-wrap gap-3">
             {twins.map((twin) => (
-              <Link key={twin.id} href={`/library/${twin.id}`} className="rounded-md border border-border px-3 py-2 text-sm hover:border-brass/50">
+              <Link key={twin.id} href={`/library/${twin.id}`} className="border border-foreground/20 px-3 py-2 text-sm hover:border-foreground">
                 {twin.brand} {twin.system}
               </Link>
             ))}
@@ -115,7 +115,7 @@ export default async function SystemPage({ params }: { params: Promise<{ slug: s
           {system.confusers.map((confuser) => {
             const other = getSystem(confuser.id);
             return (
-              <li key={confuser.id} className="rounded-md border border-border bg-card px-4 py-3 text-sm leading-relaxed">
+              <li key={confuser.id} className="border-t border-foreground/15 py-3 text-sm leading-relaxed">
                 {other ? (
                   <Link href={`/library/${other.id}`} className="font-medium text-brass hover:underline">
                     {other.brand} {other.system}

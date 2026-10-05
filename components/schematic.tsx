@@ -16,24 +16,25 @@ export function FixtureSchematic({
   const cx = VB_W / 2;
   return (
     <svg viewBox={`0 0 ${VB_W} ${VB_H}`} role="img" aria-label={title} className={className}>
-      <rect width={VB_W} height={VB_H} fill="#101714" />
+      <rect width={VB_W} height={VB_H} fill="#12110e" />
       <line
         x1="18"
         x2={VB_W - 18}
         y1={outline.boneY}
         y2={outline.boneY}
-        stroke="#3e5c4c"
+        stroke="#e7ff57"
+        strokeOpacity="0.45"
         strokeDasharray="3 4"
         strokeWidth="1"
       />
-      <path d={outlinePath(outline.points)} fill="#e7d7be" stroke="#8d7048" strokeWidth="1.2" />
+      <path d={outlinePath(outline.points)} fill="#f3eadc" stroke="#1c1814" strokeWidth="1.2" />
       <ConnectionMark profile={profile} cx={cx} top={outline.topY} />
       {guides ? (
-        <text x="12" y={outline.boneY - 6} fill="#8eaa98" fontSize="9" fontFamily="ui-monospace, monospace">
+        <text x="12" y={outline.boneY - 6} fill="#e7ff57" fontSize="9" fontFamily="ui-monospace, monospace">
           bone line
         </text>
       ) : null}
-      <text x="10" y="16" fill="#d7b072" fontSize="8" fontFamily="ui-monospace, monospace" letterSpacing="1.5">
+      <text x="10" y="16" fill="#e7ff57" fontSize="8" fontFamily="ui-monospace, monospace" letterSpacing="0.4">
         SCHEMATIC
       </text>
     </svg>
@@ -51,7 +52,7 @@ function ConnectionMark({
 }) {
   const stroke = "#5c4630";
   if (profile.connection === "ext-hex") {
-    return <rect x={cx - 7} y={top - 12} width="14" height="12" fill="#e7d7be" stroke={stroke} />;
+    return <rect x={cx - 7} y={top - 12} width="14" height="12" fill="#f3eadc" stroke={stroke} />;
   }
   if (profile.connection === "int-hex") {
     return <polygon points={`${cx - 6},${top + 8} ${cx - 6},${top + 16} ${cx},${top + 20} ${cx + 6},${top + 16} ${cx + 6},${top + 8} ${cx},${top + 4}`} fill="none" stroke={stroke} strokeWidth="1.2" />;
