@@ -341,3 +341,369 @@ export function Workstation() {
     </div>
   );
 }
+
+function UploadStage({
+  busy,
+  onFile,
+  onSchematic,
+}: {
+  busy: boolean;
+  onFile: (file: File) => void;
+  onSchematic: (id: string) => void;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [over, setOver] = useState(false);
+  return (
+    <div className="grid gap-6 lg:grid-cols-[1.3fr_0.7fr]">
+      <div
+        onDragOver={(event) => {
+          event.preventDefault();
+          setOver(true);
+        }}
+        onDragLeave={() => setOver(false)}
+        onDrop={(event) => {
+          event.preventDefault();
+          setOver(false);
+          const file = event.dataTransfer.files?.[0];
+          if (file) onFile(file);
+        }}
+        className={`film flex min-h-80 flex-col items-center justify-center rounded-lg px-6 py-12 text-center ${
+          over ? "outline outline-2 outline-brass" : ""
+        }`}
+      >
+        <p className="kicker">Periapical or one CBCT frame</p>
+        <p className="mt-3 max-w-md font-heading text-3xl text-bone">Drop the film. It stays on this device.</p>
+        <p className="mt-3 max-w-md text-sm leading-relaxed text-bone/70">
+          JPEG, PNG, WebP, or a DICOM file. Crop to the fixture on the next step. Include a collar if the implant
+          is tissue level.
+        </p>
+        <Button type="button" className="mt-6 h-11 px-5" disabled={busy} onClick={() => inputRef.current?.click()}>
+          {busy ? "Reading…" : "Choose a file"}
+        </Button>
+        <input
+          ref={inputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp,.dcm,.dicom,application/dicom"
+          className="sr-only"
+          onChange={(event) => {
+            const file = event.target.files?.[0];
+            if (file) onFile(file);
+            event.target.value = "";
+          }}
+        />
+      </div>
+      <aside className="rounded-lg border border-border bg-card p-5">
+        <h2 className="font-heading text-2xl">No film yet?</h2>
+        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+          Walk the crop and the cues on a labeled schematic. These are drawings, not radiographs.
+        </p>
+        <div className="mt-4 flex flex-col gap-2">
+          <Button type="button" variant="outline" className="h-11 justify-start" onClick={() => onSchematic("straumann-tl")}>
+            Tissue-level tulip schematic
+          </Button>
+          <Button type="button" variant="outline" className="h-11 justify-start" onClick={() => onSchematic("megagen-anyridge")}>
+            Knife-thread schematic
+          </Button>
+        </div>
+        <p className="mt-4 text-sm text-muted-foreground">
+          Or <Link href="/library" className="text-brass hover:underline">browse the library</Link> and open any system on the bench.
+        </p>
+      </aside>
+    </div>
+  );
+}
+
+function CropStage({
+  imageUrl,
+  fileName,
+  onBack,
+  onConfirm,
+}: {
+  imageUrl: string;
+  fileName: string;
+  onBack: () => void;
+  onConfirm: (next: { url: string; raster: Raster }) => void;
+}) {
+  const frameRef = useRef<HTMLDivElement>(null);
+  const imgRef = useRef<HTMLImageElement>(null);
+  const drag = useRef<{ mode: string; x: number; y: number; box: Box } | null>(null);
+  const [crop, setCrop] = useState<Box>({ x: 0.27, y: 0.08, w: 0.46, h: 0.84 });
+  const advice = cropRead(crop);
+
+  function begin(event: ReactPointerEvent<HTMLElement>, mode: string) {
+    event.preventDefault();
+    event.stopPropagation();
+    drag.current = { mode, x: event.clientX, y: event.clientY, box: crop };
+    const onMove = (moveEvent: PointerEvent) => {
+      if (!drag.current || !frameRef.current) return;
+      const rect = frameRef.current.getBoundingClientRect();
+      const dx = (moveEvent.clientX - drag.current.x) / rect.width;
+      const dy = (moveEvent.clientY - drag.current.y) / rect.height;
+      const start = drag.current.box;
+      const next = { ...start };
+      const handle = drag.current.mode;
+      if (handle === "move") {
+        next.x += dx;
+        next.y += dy;
+      } else {
+        if (handle === "ne" || handle === "se") next.w += dx;
+        if (handle === "sw" || handle === "se") next.h += dy;
+        if (handle === "nw" || handle === "sw") {
+          next.x += dx;
+          next.w -= dx;
+        }
+        if (handle === "nw" || handle === "ne") {
+          next.y += dy;
+          next.h -= dy;
+        }
+      }
+      setCrop(clampBox(next));
+    };
+    const onUp = () => {
+      drag.current = null;
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+    };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+  }
+
+  return (
+    <div className="grid gap-6 lg:grid-cols-[1.4fr_0.6fr]">
+      <div className="film rounded-lg p-3 sm:p-4">
+        <div className="flex justify-center">
+          <div ref={frameRef} className="relative inline-block max-w-full touch-none">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              ref={imgRef}
+              src={imageUrl}
+              alt={fileName ? `Uploaded film ${fileName}` : "Uploaded film"}
+              className="block max-h-[70vh] max-w-full select-none"
+              draggable={false}
+            />
+            <div
+              className="absolute border border-brass bg-brass/10"
+              style={{
+                left: `${crop.x * 100}%`,
+                top: `${crop.y * 100}%`,
+                width: `${crop.w * 100}%`,
+                height: `${crop.h * 100}%`,
+              }}
+              onPointerDown={(event) => begin(event, "move")}
+            >
+              <div className="pointer-events-none absolute inset-x-0 top-0 flex h-[22%] items-start border-b border-dashed border-brass/50 px-2 pt-1">
+                <span className="font-mono text-[10px] tracking-widest text-brass">COLLAR</span>
+              </div>
+              <div className="pointer-events-none absolute inset-x-0 top-[22%] flex h-[56%] items-start border-b border-dashed border-brass/50 px-2 pt-1">
+                <span className="font-mono text-[10px] tracking-widest text-brass">THREADS</span>
+              </div>
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 flex h-[22%] items-end px-2 pb-1">
+                <span className="font-mono text-[10px] tracking-widest text-brass">APEX</span>
+              </div>
+              {(["nw", "ne", "sw", "se"] as const).map((corner) => (
+                <button
+                  key={corner}
+                  type="button"
+                  aria-label={`Resize crop ${corner}`}
+                  className={`absolute size-5 rounded-sm border border-brass bg-background ${
+                    corner.includes("n") ? "-top-2" : "-bottom-2"
+                  } ${corner.includes("w") ? "-left-2" : "-right-2"}`}
+                  onPointerDown={(event) => begin(event, corner)}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <h2 className="font-heading text-3xl">Crop the fixture.</h2>
+        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+          Drag the box onto one implant. The bands follow the published reading order: collar, threads, apex. Leave
+          the crown and the neighboring root outside.
+        </p>
+        <p
+          className={`mt-4 rounded-md border px-3 py-2 text-sm leading-relaxed ${
+            advice.tone === "ready" ? "border-border text-muted-foreground" : "border-brass/50 text-bone"
+          }`}
+        >
+          <span className="font-medium text-brass">{advice.title}. </span>
+          {advice.text}
+        </p>
+        <div className="mt-6 flex flex-col gap-2">
+          <Button
+            type="button"
+            className="h-11"
+            onClick={() => {
+              const image = imgRef.current;
+              if (!image) return;
+              const framed = rasterFromCrop(image, crop);
+              if (framed.width < 32 || framed.height < 32) {
+                return;
+              }
+              onConfirm({ url: rasterToDataUrl(framed), raster: framed });
+            }}
+          >
+            Use this crop
+          </Button>
+          <Button type="button" variant="outline" className="h-11" onClick={() => setCrop({ x: 0.08, y: 0.04, w: 0.84, h: 0.92 })}>
+            Use most of the frame
+          </Button>
+          <Button type="button" variant="ghost" className="h-11" onClick={onBack}>
+            Choose a different film
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CueStage({
+  cropUrl,
+  cues,
+  visionNotes,
+  polarity,
+  onPolarity,
+  observation,
+  fromImage,
+  onChange,
+  onGeometry,
+  onApply,
+  onApplyAll,
+  onBack,
+  onRank,
+}: {
+  cropUrl: string;
+  cues: VisionCue[];
+  visionNotes: string[];
+  polarity: Polarity;
+  onPolarity: (polarity: Polarity) => void;
+  observation: Observation;
+  fromImage: Partial<Record<FeatureKey, boolean>>;
+  onChange: (feature: FeatureKey, value: string) => void;
+  onGeometry: (geometry: Observation["geometry"]) => void;
+  onApply: (cue: VisionCue) => void;
+  onApplyAll: () => void;
+  onBack: () => void;
+  onRank: () => void;
+}) {
+  const answered = FEATURE_KEYS.filter((feature) => observation[feature] !== "unknown").length;
+  return (
+    <div className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr]">
+      <div>
+        <div className="film rounded-lg p-3">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={cropUrl} alt="Cropped fixture" className="mx-auto max-h-[520px] w-full object-contain" />
+        </div>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <Button type="button" variant={polarity === "bright" ? "default" : "outline"} className="h-10" onClick={() => onPolarity("bright")}>
+            Fixture is bright
+          </Button>
+          <Button type="button" variant={polarity === "dark" ? "default" : "outline"} className="h-10" onClick={() => onPolarity("dark")}>
+            Fixture is dark
+          </Button>
+        </div>
+        <ul className="mt-3 space-y-1 text-xs leading-relaxed text-muted-foreground">
+          {visionNotes.map((note) => (
+            <li key={note}>{note}</li>
+          ))}
+        </ul>
+      </div>
+      <div>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <h2 className="font-heading text-3xl">Confirm only what you can see.</h2>
+          <Button type="button" variant="outline" className="h-10" onClick={onApplyAll} disabled={cues.length === 0}>
+            Apply image cues
+          </Button>
+        </div>
+        <fieldset className="mt-5">
+          <legend className="text-sm font-medium">Beam vs the long axis</legend>
+          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+            Sahiwal could use the tables only near a straight-on beam. If the threads are obviously skewed, mark the film angled.
+          </p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {(
+              [
+                ["orthogonal", "Nearly straight on"],
+                ["angled", "Obviously angled"],
+                ["unknown", "Not sure"],
+              ] as const
+            ).map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                aria-pressed={observation.geometry === value}
+                onClick={() => onGeometry(value)}
+                className={`min-h-11 rounded-md border px-3 text-sm ${
+                  observation.geometry === value
+                    ? "border-brass bg-brass/15 text-foreground"
+                    : "border-border text-muted-foreground"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </fieldset>
+        <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
+          Image measurement can suggest collar, taper, thread, and apex. It does not read the junction line or the connection.
+        </p>
+        <div className="mt-5 space-y-5">
+          {FEATURE_KEYS.map((feature) => {
+            const suggestion = cues.find((cue) => cue.feature === feature);
+            return (
+              <fieldset key={feature}>
+                <legend className="text-sm font-medium">{FEATURE_LABEL[feature]}</legend>
+                {suggestion ? (
+                  <button
+                    type="button"
+                    onClick={() => onApply(suggestion)}
+                    className="mt-2 block text-left text-xs text-brass hover:underline"
+                  >
+                    Image cue: {CHOICES[feature].find((choice) => choice.value === suggestion.value)?.label} ·{" "}
+                    {suggestion.strength} · {suggestion.note}
+                  </button>
+                ) : null}
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {CHOICES[feature].map((choice) => {
+                    const active = observation[feature] === choice.value;
+                    return (
+                      <button
+                        key={choice.value}
+                        type="button"
+                        aria-pressed={active}
+                        title={choice.hint}
+                        onClick={() => onChange(feature, choice.value)}
+                        className={`min-h-11 rounded-md border px-3 text-left text-sm ${
+                          active ? "border-brass bg-brass/15 text-foreground" : "border-border text-muted-foreground"
+                        }`}
+                      >
+                        {choice.label}
+                        {active && fromImage[feature] && choice.value !== "unknown" ? (
+                          <span className="ml-2 font-mono text-[10px] tracking-wide text-brass">IMAGE</span>
+                        ) : null}
+                      </button>
+                    );
+                  })}
+                </div>
+              </fieldset>
+            );
+          })}
+        </div>
+        <div className="mt-6 flex flex-col gap-2 sm:flex-row">
+          <Button type="button" className="h-11" onClick={onRank} disabled={answered === 0}>
+            Rank a short list
+          </Button>
+          <Button type="button" variant="outline" className="h-11" onClick={onBack}>
+            Adjust the crop
+          </Button>
+          <Link href="/library" className="inline-flex h-11 items-center justify-center px-3 text-sm text-brass hover:underline">
+            Not sure — browse the library
+          </Link>
+        </div>
+        {answered === 0 ? (
+          <p className="mt-2 text-sm text-muted-foreground">Mark at least one cue, or leave the case and browse.</p>
+        ) : null}
+      </div>
+    </div>
+  );
+}
