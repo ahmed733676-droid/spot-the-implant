@@ -17,12 +17,12 @@ const steps = [
     body: "The score is only as honest as the crop. Include a transmucosal collar. Exclude the crown. A CBCT series is one exported frame, not a volume.",
   },
   {
-    title: "Cues, then a score",
-    body: "Seven features: neck, interface, body, thread, apex, platform step, and thread starts. Unknowns are skipped. Contradictions cost the system the points. A few shapes — tulip, knife thread, convergent neck, tube-in-tube, subcrestal cone — carry an extra, documented boost.",
+    title: "Cues become evidence",
+    body: "What you confirm is hard evidence. An image measurement of neck, taper, thread, or apex stays in the same list as a soft cue until you confirm or replace it. A mild taper by itself does not name a company. A knife thread, a tulip, a convergent neck, tube-in-tube, or a subcrestal cone can move a family up the list.",
   },
   {
-    title: "Image cues are optional",
-    body: "A small on-device measurement can suggest neck, taper, thread, and apex from the crop. It does not see the connection. Nothing is applied until you accept it. Polarity can be flipped if the fixture is displayed dark.",
+    title: "Then a company, then a line",
+    body: "The short list is a differential. Twins such as Osstem and Hiossen are refused. A line inside the company is named only when these cues separate it. MegaGen ST and AnyRidge stay open on knife threads until a double lead is actually visible. Polarity can be flipped if the fixture is displayed dark. The connection is never guessed.",
   },
   {
     title: "The crop is three bands",
@@ -34,7 +34,7 @@ const steps = [
   },
   {
     title: "The number is capped",
-    body: "Feature agreement cannot display above 92%. An angled film cannot display a settled company above 62%. The notes under the list say “per the literature” and link the paper. That number is not a probability and not a sensitivity.",
+    body: "Feature agreement cannot display above 92%. An angled film cannot display a settled company above 62%. The notes under the list say \u201cper the literature\u201d and link the paper. That number is not a probability and not a sensitivity.",
   },
   {
     title: "Your labels teach the next version",
@@ -67,7 +67,7 @@ export default function HowItWorksPage() {
         <h2 className="font-heading text-2xl">Limits of a periapical</h2>
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
           Two dimensions collapse the connection. A Morse taper, an internal hex, and a tube-in-tube often look
-          like “something inside the body.” Angulation exaggerates taper. A wide abutment imitates a tulip. This
+          like \u201csomething inside the body.\u201d Angulation exaggerates taper. A wide abutment imitates a tulip. This
           bench would rather tie Straumann Bone Level with NobelParallel CC than pretend the CrossFit groove is
           visible. CBCT can add cross-sections later. It does not, by itself, name the brand.
         </p>
@@ -75,7 +75,7 @@ export default function HowItWorksPage() {
           <Link href="/library" className="text-brass hover:underline">
             Read the systems and their sources
           </Link>
-          <span className="text-muted-foreground"> · </span>
+          <span className="text-muted-foreground"> \u00b7 </span>
           <Link href="/about" className="text-brass hover:underline">
             Disclaimer
           </Link>
