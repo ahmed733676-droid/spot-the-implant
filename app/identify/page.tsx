@@ -4,7 +4,7 @@ import { Workstation } from "@/components/identify/workstation";
 
 export const metadata: Metadata = {
   title: "Identify",
-  description: "Crop a fixture, confirm radiographic cues, and read a capped short list.",
+  description: "Crop a fixture, confirm radiographic cues, and read two companies.",
 };
 
 export default function IdentifyPage() {

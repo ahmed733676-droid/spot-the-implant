@@ -13,13 +13,16 @@ export function ConfidenceMeter({
   return (
     <div>
       <div className="flex items-baseline justify-between gap-3">
-        <p className={`font-mono tabular-nums text-brass ${prominent ? "text-2xl" : "text-lg"}`}>{percent}%</p>
-        <p className="text-xs tracking-wide text-muted-foreground uppercase">{caption}</p>
+        <p className={`font-heading tabular-nums text-foreground ${prominent ? "text-5xl leading-none" : "text-3xl leading-none"}`}>
+          {percent}
+          <span className="font-mono text-sm text-brass">%</span>
+        </p>
+        <p className="text-right font-mono text-[11px] text-muted-foreground">{caption}</p>
       </div>
-      <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10" aria-hidden>
-        <div className="h-full rounded-full bg-brass transition-[width] duration-500" style={{ width: `${percent}%` }} />
+      <div className="mt-3 h-px bg-foreground/15" aria-hidden>
+        <div className="h-1 -mt-px bg-brass" style={{ width: `${percent}%` }} />
       </div>
-      <p className="mt-1.5 text-xs text-muted-foreground">Not a probability. Capped at 92%.</p>
+      <p className="mt-2 font-mono text-[11px] text-muted-foreground">Not a probability. Ceiling 92.</p>
     </div>
   );
 }
