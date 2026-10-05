@@ -6,10 +6,29 @@ Spot the Implant is a Next.js app. Identification runs entirely in the browser. 
 
 1. **Read the film.** JPEG, PNG, and WebP use the browser image decoder. DICOM uses `dicom-parser` for uncompressed little-endian grayscale and for a single JPEG baseline or lossless JPEG frame. Other transfer syntaxes stop with a request to export PNG from the viewer. Multi-frame files use frame 0 and say so. Windowing uses the DICOM window center and width when present, otherwise a 1st-to-99th percentile stretch.
 2. **Crop.** The dentist isolates the fixture. A tissue-level collar has to be inside the box or the tulip cue cannot be true.
-3. **Optional image cues.** `lib/vision.ts` thresholds the crop (fixture bright, or inverted), measures width along the long axis, and suggests neck, taper, thread class, and apex. It does not suggest a connection. Suggestions stay off the checklist until accepted. The measurement is a heuristic on a drawing or a radiograph. It is not a trained implant classifier.
-4. **Checklist.** Seven features in `lib/types.ts`. **Not sure** is a first-class value.
-5. **Score.** `lib/scoring.ts` ranks the catalog in `lib/systems.ts`.
-6. **Label.** Correct, wrong, unsure, or specialist. `lib/feedback.ts` writes the cues and the verdict to `localStorage` under `spot-the-implant.feedback.v1`. The bitmap is not stored.
+3. **Identify.** `rankSystems` in `lib/scoring.ts` is a facade over four layers in `lib/pipeline/`. Image measurements are not a second guess. They enter layer 1.
+4. **Label.** Correct, wrong, unsure, or specialist. `lib/feedback.ts` writes the cues and the verdict to `localStorage` under `spot-the-implant.feedback.v1`. The bitmap is not stored.
+
+## ADR: company identity is a differential, not a catalog sort
+
+**Status:** accepted, 6 Oct 2026, after a labeled periapical (Ahmed, Cairo) was returned as Ankylos.
+
+**Problem.** The previous scorer treated every matching cue as equal, sorted ties alphabetically, and then multiplied only the leader’s percent when the gap was small. One confirmed “mild taper” therefore crowned Ankylos at 21% while the next cards showed 34%. MegaGen was in the catalog and accepts a mild taper, but it sorted after the A–B names, so it never appeared. The on-device measurement could see threads and still did not enter the score until someone clicked it.
+
+**Decision.** Company identification is four layers. A line is named only after the company differential says the lines inside that company actually separate.
+
+| Layer | Module | What it does |
+| --- | --- | --- |
+| 1. Cue extraction | `lib/pipeline/extract.ts` | A confirmed mark is hard evidence and blocks the image cue for that feature. An unmarked collar, body, thread, or apex keeps the image cue as soft evidence (low ≈ 0.40, moderate ≈ 0.62). Vision never supplies a connection or a junction line. |
+| 2. Feature evidence graph | `lib/pipeline/graph.ts` | Confirmed match earns the feature weight. Confirmed miss is a contradiction. A vision match on a distinctive value (tulip, knife, progressive, microthread, subcrestal cone, tube-in-tube, external hex, buttress, hyperbolic) counts fully at its soft strength. A generic vision match counts less. A vision miss is a small penalty, and it is printed only when the cue is a moderate distinctive reading. Signatures fire when every part is present in the evidence, confirmed or from the image. |
+| 3. Company differential | `lib/pipeline/differential.ts` | Companies roll up with `identityOf`. The company score is the best line, not the sum. Declared twins (Osstem/Hiossen and the others) refuse `companySettled`. Fewer than three hard cues refuse it. A vision-only distinctive cue can move a family up the list and still cannot settle the company. An angled film multiplies agreement by 0.75, caps it at 62%, and forces the company unsettled. |
+| 4. Line, only if separable | same module | Inside the leading company, a second line within 0.08 of the best stays open. MegaGen ST and AnyRidge share the KnifeThread signature. A double lead, which the ST brochure adds to KnifeThread, is what settles ST. |
+
+**Generic cues are not a ranking.** Mild taper, a parallel body, a standard thread, a rounded apex, a bone-level collar, and a single lead do not belong to one company. When no distinctive cue is present and three or more companies tie, the result is `flat`. The screen says this is not a ranking, badges every card “Same evidence,” and the note names Ankylos and MegaGen as members of that shared set. Alphabetical order is not a winner.
+
+**Percents stay in rank order.** Near-ties (rank gap under 0.02) share one displayed percent. A later row never displays a higher percent than the row above it. The old leader-only gap penalty is gone.
+
+**What did not change.** The 92% cap, the 34% cap under two hard cues, the 55% twin cap, the 80% cap when the company is ahead but the line is open, and the refusal to call the company on an angled film. This is still decision support. It is not a sensitivity and not a clearance.
 
 ## Feature ontology
 
@@ -30,7 +49,8 @@ A signature adds points only when every listed cue is present. It does not overr
 | --- | --- |
 | Tulip → Tissue Level | Brochure: integrated tulip-shaped machined collar |
 | Hyperbolic neck → Prama | Brochure: 2 mm hyperbola plus 0.8 mm cylinder |
-| Knife thread → AnyRidge | Brochure: KnifeThread |
+| Knife thread → MegaGen (AnyRidge and ST) | Brochure: KnifeThread. The line stays open until a lead separates them |
+| Knife thread and double lead → MegaGen ST | Brochure: KnifeThread added to a double thread. Vetronix is a chair-side alias, marked interpretation |
 | Subcrestal cone, and progressive thread → Ankylos | Manual: TissueCare connection and a thread that deepens apically |
 | External hex and coarse thread → Southern | Teaching split from a fine Brånemark hex. Marked as interpretation |
 | Tube-in-tube → Camlog | Brochure. The dentist has to choose it; the image code never will |
@@ -44,11 +64,11 @@ A signature adds points only when every listed cue is present. It does not overr
 
 `confidence = clamp(0.18 + 0.74 × affinity, 0.04, 0.92)`, then:
 
-- fewer than 2 cues → at most 0.34
+- fewer than 2 hard cues → at most 0.34
 - fewer than 3 → at most 0.52
 - fewer than 4 → at most 0.74
-- gap to second place under 0.05 / 0.10 / 0.18 multiplies the leader by 0.68 / 0.78 / 0.88
-- a declared twin within 0.04 affinity caps both at 0.60
+- a declared twin within 0.04 rank score caps both system rows at 0.60
+- near-ties share one percent, and a later row never displays a higher percent than the row above it
 
 The UI rounds that to an integer and still will not print a number above 92. On a system row the word is **feature agreement**. On the short list the word is **company agreement**, because the rank the dentist sees is the manufacturer.
 
