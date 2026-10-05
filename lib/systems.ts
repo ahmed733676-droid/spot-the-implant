@@ -605,3 +605,792 @@ export const SYSTEMS: ImplantSystem[] = [
       },
     ],
   },
+  {
+    id: "osstem-tsiii",
+    brand: "Osstem",
+    system: "TS III",
+    aliases: ["TSIII", "TS III SA", "Osstem SA"],
+    summary:
+      "Tapered bone-level fixture widely catalogued with an internal conical connection and a sandblasted, acid-etched surface. Scored here as radiographically paired with Hiossen ET III.",
+    lookFor: [
+      "Mild-to-moderate taper, bone-level platform, no tulip.",
+      "Internal cone. The hex-versus-cone detail is often not readable.",
+      "Double lead on many TS III fixtures, when the starts can be counted.",
+    ],
+    pitfalls: [
+      "Hiossen ET III is treated as the same radiographic family. The app will not pretend to split them.",
+    ],
+    accepts: {
+      collar: ["bone-level"],
+      connection: ["internal-conical"],
+      body: ["mild-taper"],
+      thread: ["standard"],
+      apex: ["cutting"],
+      platformSwitch: ["yes"],
+      lead: ["double"],
+      microgap: ["crestal"],
+    },
+    signatures: [],
+    twins: ["hiossen-etiii"],
+    confusers: [
+      {
+        id: "hiossen-etiii",
+        note: "ET III is the Hiossen catalog name in the same design family. Keep both if the cues match, and confirm with the record.",
+      },
+    ],
+    schematic: {
+      collar: "none",
+      body: "mild",
+      thread: "standard",
+      apex: "vent",
+      connection: "cone",
+      platformSwitch: true,
+    },
+    sources: [
+      {
+        title: "Osstem implant systems",
+        url: "https://en.osstem.com/",
+        kind: "brochure",
+      },
+      {
+        title: "Pairing with Hiossen ET III is a radiographic interpretation, not a claim that the SKUs are identical.",
+        url: "https://hiossen.com/",
+        kind: "interpretation",
+      },
+    ],
+  },
+  {
+    id: "hiossen-etiii",
+    brand: "Hiossen",
+    system: "ET III",
+    aliases: ["ETIII", "ET III NH", "Hiossen SA"],
+    summary:
+      "US-catalog tapered implant with an internal conical connection. In this library it is the radiographic twin of Osstem TS III, not a fixture you should split from TS III on one periapical.",
+    lookFor: [
+      "Same short list as TS III: mild taper, bone-level, internal cone, cutting apex.",
+      "No external hex and no transmucosal tulip.",
+    ],
+    pitfalls: [
+      "A confident choice between Hiossen and Osstem from a film alone is not supported.",
+    ],
+    accepts: {
+      collar: ["bone-level"],
+      connection: ["internal-conical"],
+      body: ["mild-taper"],
+      thread: ["standard"],
+      apex: ["cutting"],
+      platformSwitch: ["yes"],
+      lead: ["double"],
+      microgap: ["crestal"],
+    },
+    signatures: [],
+    twins: ["osstem-tsiii"],
+    confusers: [
+      {
+        id: "osstem-tsiii",
+        note: "TS III carries the same cues in this library. Report the pair, not a single brand.",
+      },
+    ],
+    schematic: {
+      collar: "none",
+      body: "mild",
+      thread: "standard",
+      apex: "vent",
+      connection: "cone",
+      platformSwitch: true,
+    },
+    sources: [
+      { title: "Hiossen", url: "https://hiossen.com/", kind: "brochure" },
+      {
+        title: "Twin status versus Osstem TS III is an interpretation for radiographic short-listing.",
+        url: "https://en.osstem.com/",
+        kind: "interpretation",
+      },
+    ],
+  },
+  {
+    id: "megagen-anyridge",
+    brand: "MegaGen",
+    system: "AnyRidge",
+    aliases: ["KnifeThread", "Xpeed", "Any Ridge"],
+    summary:
+      "MegaGen’s KnifeThread design: a comparatively narrow core with deep knife-shaped threads, so thread depth changes with the chosen implant while the core stays similar.",
+    lookFor: [
+      "Thin, deep thread blades and a narrow core.",
+      "The outer envelope looks aggressive even when the core is slim.",
+      "Bone-level internal connection. The knife thread is the sign, not the hex.",
+    ],
+    pitfalls: [
+      "A coarse V-thread is not a knife thread. The blades should look thin relative to the gaps.",
+    ],
+    accepts: {
+      collar: ["bone-level"],
+      connection: ["internal-conical"],
+      body: ["strong-taper", "mild-taper"],
+      thread: ["knife"],
+      apex: ["rounded"],
+      platformSwitch: ["yes"],
+      lead: ["single"],
+      microgap: ["crestal"],
+    },
+    signatures: [
+      {
+        all: [{ feature: "thread", value: "knife" }],
+        boost: 2.8,
+        note: "Knife-thin deep threads are the AnyRidge sign in this library.",
+      },
+    ],
+    twins: [],
+    confusers: [
+      {
+        id: "southern-external",
+        note: "Southern’s coarse external-hex thread is deep but not a knife blade, and the hex is external.",
+      },
+    ],
+    schematic: {
+      collar: "none",
+      body: "strong",
+      thread: "knife",
+      apex: "round",
+      connection: "cone",
+      platformSwitch: true,
+    },
+    sources: [
+      {
+        title: "MegaGen AnyRidge — KnifeThread",
+        url: "https://imegagen.com/product/1292/",
+        kind: "brochure",
+      },
+    ],
+  },
+  {
+    id: "mis-seven",
+    brand: "MIS",
+    system: "SEVEN",
+    aliases: ["MIS Seven", "Seven internal hex"],
+    summary:
+      "MIS SEVEN, catalogued on an internal hex. Scored as a mildly tapered bone-level body with a double lead and a domed apex.",
+    lookFor: [
+      "Internal hex.",
+      "Mild taper and a rounded apex.",
+      "No microthread collar and no external hex.",
+    ],
+    pitfalls: [
+      "MIS C1 uses a conical seat. If you cannot see hex versus cone, leave the connection unmarked.",
+    ],
+    accepts: {
+      collar: ["bone-level"],
+      connection: ["internal-hex"],
+      body: ["mild-taper"],
+      thread: ["standard"],
+      apex: ["rounded"],
+      platformSwitch: ["no"],
+      lead: ["double"],
+      microgap: ["crestal"],
+    },
+    signatures: [],
+    twins: [],
+    confusers: [
+      {
+        id: "mis-c1",
+        note: "C1 is the conical MIS seat. SEVEN is the internal-hex seat. The bodies can look alike.",
+      },
+    ],
+    schematic: {
+      collar: "none",
+      body: "mild",
+      thread: "standard",
+      apex: "round",
+      connection: "int-hex",
+      platformSwitch: false,
+    },
+    sources: [
+      {
+        title: "MIS SEVEN catalog (internal hex tools and implant line)",
+        url: "https://www.mis-implants.com/upload/PDF/Products/Implants/MIS_SEVEN_Catalog.pdf",
+        kind: "brochure",
+      },
+    ],
+  },
+  {
+    id: "mis-c1",
+    brand: "MIS",
+    system: "C1",
+    aliases: ["MIS C1", "conical MIS"],
+    summary:
+      "MIS conical-connection implant, read here as bone-level with platform shift, a mild taper, and a double lead. The connection angle is not inferred from the film.",
+    lookFor: [
+      "Internal cone with the seat inside the shoulder.",
+      "Mild taper, rounded apex, no tulip.",
+    ],
+    pitfalls: [
+      "This pattern overlaps other platform-switched cones. C1 should stay in a short list unless the record already says MIS.",
+    ],
+    accepts: {
+      collar: ["bone-level"],
+      connection: ["internal-conical"],
+      body: ["mild-taper"],
+      thread: ["standard"],
+      apex: ["rounded"],
+      platformSwitch: ["yes"],
+      lead: ["double"],
+      microgap: ["crestal"],
+    },
+    signatures: [],
+    twins: [],
+    confusers: [
+      {
+        id: "mis-seven",
+        note: "SEVEN is the internal-hex sibling. Mark hex only when you can see it.",
+      },
+    ],
+    schematic: {
+      collar: "none",
+      body: "mild",
+      thread: "standard",
+      apex: "round",
+      connection: "cone",
+      platformSwitch: true,
+    },
+    sources: [
+      {
+        title: "MIS implant systems",
+        url: "https://www.mis-implants.com/",
+        kind: "brochure",
+      },
+      {
+        title: "C1 body and lead details are a catalog interpretation for short-listing, not a measured radiograph atlas.",
+        url: "https://www.mis-implants.com/",
+        kind: "interpretation",
+      },
+    ],
+  },
+  {
+    id: "dentium-implantium",
+    brand: "Dentium",
+    system: "Implantium",
+    aliases: ["Implantium", "Dentium microthread"],
+    summary:
+      "Dentium’s microthread-neck fixture on an internal hex, with a tapered body. The microthread is the neck sign; the hex separates it from Astra’s cone.",
+    lookFor: [
+      "Fine thread band at the neck.",
+      "Internal hex rather than a long cone.",
+      "Double lead when it can be counted.",
+    ],
+    pitfalls: [
+      "Astra MicroThread plus a cone is the main differential. Do not upgrade a microthread into an Astra call without the seat.",
+    ],
+    accepts: {
+      collar: ["microthread"],
+      connection: ["internal-hex"],
+      body: ["mild-taper"],
+      thread: ["standard"],
+      apex: ["rounded"],
+      platformSwitch: ["no"],
+      lead: ["double"],
+      microgap: ["crestal"],
+    },
+    signatures: [],
+    twins: [],
+    confusers: [
+      {
+        id: "astra-tx",
+        note: "Astra’s MicroThread sits on Conical Seal Design. Implantium is scored on an internal hex.",
+      },
+    ],
+    schematic: {
+      collar: "micro",
+      body: "mild",
+      thread: "standard",
+      apex: "round",
+      connection: "int-hex",
+      platformSwitch: false,
+    },
+    sources: [
+      {
+        title: "Dentium USA implant systems",
+        url: "https://www.dentiumusa.com/products/implant-systems/superline-2",
+        kind: "brochure",
+      },
+      {
+        title: "Implantium neck and hex are a catalog interpretation used for the checklist.",
+        url: "https://www.dentiumusa.com/",
+        kind: "interpretation",
+      },
+    ],
+  },
+  {
+    id: "dentium-superline",
+    brand: "Dentium",
+    system: "SuperLine",
+    aliases: ["SuperLine II", "Superline"],
+    summary:
+      "Dentium describes SuperLine II as a double-threaded tapered body with one conical connection and an internal hex for indexation across diameters.",
+    lookFor: [
+      "Taper plus a double thread and a cutting apex.",
+      "Conical connection. No microthread collar, unlike Implantium.",
+    ],
+    pitfalls: [
+      "Neodent Helix GM is the aggressive tapered cone that shares this silhouette. Keep both when the cues match.",
+    ],
+    accepts: {
+      collar: ["bone-level"],
+      connection: ["internal-conical"],
+      body: ["strong-taper"],
+      thread: ["coarse"],
+      apex: ["cutting"],
+      platformSwitch: ["yes"],
+      lead: ["double"],
+      microgap: ["crestal"],
+    },
+    signatures: [],
+    twins: ["neodent-helix"],
+    confusers: [
+      {
+        id: "neodent-helix",
+        note: "Helix GM publishes a 16° Grand Morse connection and a similarly aggressive tapered body. This film will often support both.",
+      },
+    ],
+    schematic: {
+      collar: "none",
+      body: "strong",
+      thread: "coarse",
+      apex: "vent",
+      connection: "cone",
+      platformSwitch: true,
+    },
+    sources: [
+      {
+        title: "Dentium SuperLine II",
+        url: "https://www.dentiumusa.com/products/implant-systems/superline-2",
+        kind: "brochure",
+      },
+    ],
+  },
+  {
+    id: "neodent-helix",
+    brand: "Neodent",
+    system: "Helix GM",
+    aliases: ["Grand Morse", "GM Helix", "Helix"],
+    summary:
+      "Grand Morse connection: a deep internal taper of 16° plus an indexed hex called Grand Morse Exact, shared across Helix, Drive, and Titamax diameters. Helix is the tapered, aggressive-thread body in that family.",
+    lookFor: [
+      "Strong taper, coarse thread, cutting apex.",
+      "Internal cone. The 16° angle itself is not visible.",
+      "One prosthetic connection size across diameters.",
+    ],
+    pitfalls: [
+      "Drive GM and Titamax GM share the connection and are not separate entries. A Helix guess does not exclude those bodies.",
+      "SuperLine is the closest outside look-alike.",
+    ],
+    accepts: {
+      collar: ["bone-level"],
+      connection: ["internal-conical"],
+      body: ["strong-taper"],
+      thread: ["coarse"],
+      apex: ["cutting"],
+      platformSwitch: ["yes"],
+      lead: ["double"],
+      microgap: ["crestal"],
+    },
+    signatures: [],
+    twins: ["dentium-superline"],
+    confusers: [
+      {
+        id: "dentium-superline",
+        note: "SuperLine II is also a double-thread tapered cone. Grand Morse versus Dentium’s cone is a record check, not a film check.",
+      },
+      {
+        id: "nobel-active",
+        note: "NobelActive’s apex is pointed and its connection is the Nobel cone. Helix is scored with a cutting apex.",
+      },
+    ],
+    schematic: {
+      collar: "none",
+      body: "strong",
+      thread: "coarse",
+      apex: "vent",
+      connection: "cone",
+      platformSwitch: true,
+    },
+    sources: [{ title: "Neodent Grand Morse prosthetics manual", url: neodentGm, kind: "manual" }],
+  },
+  {
+    id: "camlog-progressive",
+    brand: "Camlog",
+    system: "Progressive-Line",
+    aliases: ["Tube-in-Tube", "Screw-Line", "Promote"],
+    summary:
+      "Camlog’s Tube-in-Tube connection with three cams, shared by Screw-Line and Progressive-Line. Progressive-Line adds an apically conical body and threads that run toward the apex.",
+    lookFor: [
+      "Tube-in-Tube only if that geometry is already known. The cams are seldom obvious.",
+      "Apical taper with thread carried toward the tip.",
+      "No external hex.",
+    ],
+    pitfalls: [
+      "If you leave the connection as a generic internal seat, Camlog sinks into the cone cluster on purpose.",
+    ],
+    accepts: {
+      collar: ["bone-level", "machined-band"],
+      connection: ["tube-in-tube"],
+      body: ["strong-taper", "mild-taper"],
+      thread: ["coarse", "standard"],
+      apex: ["rounded"],
+      platformSwitch: ["no"],
+      lead: ["single"],
+      microgap: ["crestal"],
+    },
+    signatures: [
+      {
+        all: [{ feature: "connection", value: "tube-in-tube" }],
+        boost: 2.2,
+        note: "Tube-in-Tube is treated as a Camlog-family sign when you can actually defend it.",
+      },
+    ],
+    twins: [],
+    confusers: [
+      {
+        id: "anthogyr-axiom",
+        note: "Without a visible tube-in-tube seat, Progressive-Line looks like any other tapered internal implant.",
+      },
+    ],
+    schematic: {
+      collar: "none",
+      body: "strong",
+      thread: "coarse",
+      apex: "round",
+      connection: "tube",
+      platformSwitch: false,
+    },
+    sources: [
+      {
+        title: "Camlog Tube-in-Tube and Progressive-Line",
+        url: "https://www.camlog.com/en/products/implant-systems/camlog",
+        kind: "brochure",
+      },
+    ],
+  },
+  {
+    id: "anthogyr-axiom",
+    brand: "Anthogyr",
+    system: "Axiom BL",
+    aliases: ["Axiom", "Axiom REG", "Axiom PX"],
+    summary:
+      "Bone-level Anthogyr Axiom fixture scored as an internal conical, platform-switched, mildly tapered implant. It lives in the generic cone cluster unless other records intervene.",
+    lookFor: [
+      "Bone-level internal cone.",
+      "Mild taper and a standard thread.",
+      "No pathognomonic neck.",
+    ],
+    pitfalls: [
+      "BEGO Semados RSX is scored with the same silhouette. A tie is the honest output.",
+    ],
+    accepts: {
+      collar: ["bone-level"],
+      connection: ["internal-conical"],
+      body: ["mild-taper"],
+      thread: ["standard"],
+      apex: ["rounded"],
+      platformSwitch: ["yes"],
+      lead: ["single"],
+      microgap: ["crestal"],
+    },
+    signatures: [],
+    twins: ["bego-semados"],
+    confusers: [
+      {
+        id: "bego-semados",
+        note: "Semados RSX is in the same mild internal-cone bucket. Do not order Anthogyr parts from that tie.",
+      },
+    ],
+    schematic: {
+      collar: "none",
+      body: "mild",
+      thread: "standard",
+      apex: "round",
+      connection: "cone",
+      platformSwitch: true,
+    },
+    sources: [
+      {
+        title: "Anthogyr implant systems",
+        url: "https://www.anthogyr.com/",
+        kind: "brochure",
+      },
+      {
+        title: "Axiom BL checklist values are a catalog interpretation for short-listing.",
+        url: "https://www.anthogyr.com/",
+        kind: "interpretation",
+      },
+    ],
+  },
+  {
+    id: "southern-external",
+    brand: "Southern Implants",
+    system: "External hex, coarse thread",
+    aliases: ["Southern", "Co-Axis", "MAX", "external hex Southern"],
+    summary:
+      "Southern’s external-hex range, scored for the coarse deep thread that separates it from a classic Brånemark film. Deep Conical Southern implants are a different connection and are not this entry.",
+    lookFor: [
+      "External hex plus visibly deep, widely spaced threads.",
+      "Body often tapered rather than a long parallel wall.",
+      "Roughness often runs close to the top.",
+    ],
+    pitfalls: [
+      "Co-Axis angulation is a prosthetic feature and is easy to miss on a periapical.",
+      "This entry is not Southern Deep Conical.",
+    ],
+    accepts: {
+      collar: ["bone-level"],
+      connection: ["external-hex"],
+      body: ["strong-taper", "mild-taper"],
+      thread: ["coarse"],
+      apex: ["rounded"],
+      platformSwitch: ["no"],
+      lead: ["single"],
+      microgap: ["supracrestal", "crestal"],
+    },
+    signatures: [
+      {
+        all: [
+          { feature: "connection", value: "external-hex" },
+          { feature: "thread", value: "coarse" },
+        ],
+        boost: 1.7,
+        note: "External hex plus a coarse thread is the Southern pattern against Brånemark in this library.",
+      },
+    ],
+    twins: [],
+    confusers: [
+      {
+        id: "nobel-branemark",
+        note: "Brånemark’s external hex is paired here with a machined neck and a finer parallel thread.",
+      },
+    ],
+    schematic: {
+      collar: "none",
+      body: "strong",
+      thread: "coarse",
+      apex: "round",
+      connection: "ext-hex",
+      platformSwitch: false,
+    },
+    sources: [
+      {
+        title: "Southern Implants",
+        url: "https://www.southernimplants.com/",
+        kind: "brochure",
+      },
+      {
+        title: "Coarse-thread external-hex reading is a teaching interpretation for this checklist.",
+        url: "https://www.southernimplants.com/",
+        kind: "interpretation",
+      },
+    ],
+  },
+  {
+    id: "bego-semados",
+    brand: "BEGO",
+    system: "Semados RSX",
+    aliases: ["Semados", "Bego", "RSX", "RS"],
+    summary:
+      "BEGO Semados RS/RSX scored as a bone-level, platform-switched internal cone with a mild taper. The entry is intentionally non-specific.",
+    lookFor: [
+      "Nothing pathognomonic. Mild taper, standard thread, internal cone.",
+      "Use it as a member of the cone cluster, then confirm on the card or the record.",
+    ],
+    pitfalls: [
+      "Several Semados generations differ. This one profile cannot cover S-Line microthreads and RSX equally well.",
+    ],
+    accepts: {
+      collar: ["bone-level"],
+      connection: ["internal-conical"],
+      body: ["mild-taper"],
+      thread: ["standard"],
+      apex: ["rounded"],
+      platformSwitch: ["yes"],
+      lead: ["single"],
+      microgap: ["crestal"],
+    },
+    signatures: [],
+    twins: ["anthogyr-axiom"],
+    confusers: [
+      {
+        id: "anthogyr-axiom",
+        note: "Axiom BL shares this mild cone silhouette. Keep the pair together.",
+      },
+    ],
+    schematic: {
+      collar: "none",
+      body: "mild",
+      thread: "standard",
+      apex: "round",
+      connection: "cone",
+      platformSwitch: true,
+    },
+    sources: [
+      {
+        title: "BEGO implantology",
+        url: "https://www.bego.com/implantology-solutions/",
+        kind: "brochure",
+      },
+      {
+        title: "RSX feature bucket is a partial catalog interpretation.",
+        url: "https://www.bego.com/",
+        kind: "interpretation",
+      },
+    ],
+  },
+  {
+    id: "prama",
+    brand: "Sweden & Martina",
+    system: "Prama",
+    aliases: ["hyperbolic neck", "UTM", "Collex"],
+    summary:
+      "Transmucosal neck with a 0.80 mm cylindrical portion and a 2.00 mm hyperbolic portion, UTM microthread along the neck, and the Collex connection with an internal hex. Larger diameters share a 3.40 mm connection.",
+    lookFor: [
+      "Neck narrows toward the crown. It does not flare like a tulip.",
+      "Microthread along that neck (UTM), which may be subtle.",
+      "Internal hex. The hyperbolic outline is the sign you can actually see.",
+    ],
+    pitfalls: [
+      "A narrow abutment on a bone-level fixture can fake a convergent neck. The neck has to be continuous with the fixture.",
+    ],
+    accepts: {
+      collar: ["hyperbolic"],
+      connection: ["internal-hex"],
+      body: ["parallel", "mild-taper"],
+      thread: ["standard", "buttress"],
+      apex: ["rounded"],
+      platformSwitch: ["yes", "no"],
+      lead: ["single"],
+      microgap: ["supracrestal"],
+    },
+    signatures: [
+      {
+        all: [{ feature: "collar", value: "hyperbolic" }],
+        boost: 2.6,
+        note: "A convergent hyperbolic neck is the Prama sign in this library.",
+      },
+    ],
+    twins: [],
+    confusers: [
+      {
+        id: "straumann-tl",
+        note: "Tissue Level flares coronally. Prama converges coronally.",
+      },
+    ],
+    schematic: {
+      collar: "hyperbolic",
+      body: "parallel",
+      thread: "standard",
+      apex: "round",
+      connection: "int-hex",
+      platformSwitch: true,
+    },
+    sources: [
+      {
+        title: "Sweden & Martina Prama morphology",
+        url: "https://prama.sweden-martina.com/en/morphology",
+        kind: "brochure",
+      },
+      {
+        title: "Prama brochure: hyperbolic neck, UTM, Collex internal hex",
+        url: "https://www.sweden-martina.com/articms/admin/reserved_area_file/177/d-imp-beprama-e_rev.12-17_v.01_LR.pdf",
+        kind: "brochure",
+      },
+    ],
+  },
+  {
+    id: "biomet-3i-certain",
+    brand: "Biomet 3i",
+    system: "Certain",
+    aliases: ["3i", "OSSEOTITE", "Certain internal", "PREVAIL"],
+    summary:
+      "3i Certain internal-connection implant. Scored as an internal hex on a parallel or mildly tapered body, with or without a short machined band. PREVAIL’s medialized platform is allowed but not required.",
+    lookFor: [
+      "Internal connection, not the older 3i external hex (that external-hex line is not this entry).",
+      "Standard thread and a rounded apex.",
+      "Parallel body unless you are clearly on a tapered NT variant.",
+    ],
+    pitfalls: [
+      "Certain versus Tapered Screw-Vent needs the lead count or the record. Both are internal hexes from the Zimmer Biomet / ZimVie family history.",
+    ],
+    accepts: {
+      collar: ["machined-band", "bone-level"],
+      connection: ["internal-hex"],
+      body: ["parallel", "mild-taper"],
+      thread: ["standard"],
+      apex: ["rounded"],
+      platformSwitch: ["yes", "no"],
+      lead: ["single"],
+      microgap: ["crestal"],
+    },
+    signatures: [],
+    twins: [],
+    confusers: [
+      {
+        id: "zimmer-tsv",
+        note: "Tapered Screw-Vent is the triple-lead tapered hex. Certain is scored as a single-lead internal hex.",
+      },
+    ],
+    schematic: {
+      collar: "machined",
+      body: "parallel",
+      thread: "standard",
+      apex: "round",
+      connection: "int-hex",
+      platformSwitch: true,
+    },
+    sources: [
+      {
+        title: "ZimVie / 3i Certain overview",
+        url: "https://www.zimvie.com/en/dental/dental-implant-systems.html",
+        kind: "brochure",
+      },
+      {
+        title: "Certain versus external-hex OSSEOTITE is separated here on purpose; the external-hex 3i line is not scored.",
+        url: "https://www.zimvie.com/",
+        kind: "interpretation",
+      },
+    ],
+  },
+];
+
+const byId = new Map(SYSTEMS.map((system) => [system.id, system]));
+
+export function getSystem(id: string): ImplantSystem | undefined {
+  return byId.get(id);
+}
+
+export function brands(): string[] {
+  return [...new Set(SYSTEMS.map((system) => system.brand))].sort((a, b) => a.localeCompare(b));
+}
+
+export type CompanyIdentity = {
+  company: string;
+  manufacturer: string | null;
+};
+
+/** The name a dentist writes on the lab slip. Generation and SKU stay on `system`. */
+export function identityOf(system: ImplantSystem): CompanyIdentity {
+  switch (system.id) {
+    case "astra-tx":
+    case "astra-ev":
+      return { company: "Astra Tech", manufacturer: "Dentsply Sirona" };
+    case "ankylos":
+      return { company: "Ankylos", manufacturer: "Dentsply Sirona" };
+    case "zimmer-tsv":
+      return { company: "Zimmer Biomet", manufacturer: "ZimVie" };
+    case "biomet-3i-certain":
+      return { company: "Biomet 3i", manufacturer: "ZimVie" };
+    case "neodent-helix":
+      return { company: "Neodent", manufacturer: "Straumann Group" };
+    default:
+      return { company: system.brand, manufacturer: null };
+  }
+}
+
+export function companies(): string[] {
+  return [...new Set(SYSTEMS.map((system) => identityOf(system).company))].sort((a, b) => a.localeCompare(b));
+}
