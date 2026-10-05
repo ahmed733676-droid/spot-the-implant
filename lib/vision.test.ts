@@ -37,6 +37,30 @@ describe("analyzeRaster", () => {
     expect(report.notes.join(" ")).toMatch(/Connection geometry is not inferred/);
   });
 
+  it("reads knife threads on a notched fixture beside a smooth bright tooth", () => {
+    const width = 180;
+    const height = 320;
+    const data = new Uint8ClampedArray(width * height * 4);
+    const set = (x: number, y: number, value: number) => {
+      const pixel = (y * width + x) * 4;
+      data[pixel] = value;
+      data[pixel + 1] = value;
+      data[pixel + 2] = value;
+      data[pixel + 3] = 255;
+    };
+    for (let y = 40; y < 210; y++) {
+      for (let x = 118; x < 170; x++) set(x, y, 236);
+    }
+    for (let y = 28; y < 292; y++) {
+      const phase = (y - 28) % 18;
+      const blade = phase < 9 ? phase / 9 : (18 - phase) / 9;
+      const half = 6 + blade * 16;
+      for (let x = Math.round(46 - half); x <= Math.round(46 + half); x++) set(x, y, 248);
+    }
+    const report = analyzeRaster({ width, height, data }, "bright");
+    expect(report.cues.find((item) => item.feature === "thread")?.value).toBe("knife");
+  });
+
   it("asks for a polarity check when the crop is empty", () => {
     const raster = {
       width: 40,
