@@ -472,7 +472,10 @@ function CropStage({
     <div className="grid gap-6 lg:grid-cols-[1.4fr_0.6fr]">
       <div className="film rounded-lg p-3 sm:p-4">
         <div className="flex justify-center">
-          <div ref={frameRef} className="relative inline-block max-w-full touch-none">
+          <div
+            ref={frameRef}
+            className="relative inline-block max-w-full touch-none"
+          >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               ref={imgRef}
@@ -706,4 +709,345 @@ function CueStage({
       </div>
     </div>
   );
+}
+
+function ResultStage({
+  result,
+  cropUrl,
+  teaching,
+  status,
+  labelCount,
+  onMarkCompany,
+  onMarkLine,
+  onUnsure,
+  onSpecialist,
+  onNone,
+  onBack,
+  onReset,
+  onExport,
+  onClear,
+  specialistOpen,
+  setSpecialistOpen,
+}: {
+  result: RankResult;
+  cropUrl: string | null;
+  teaching: boolean;
+  status: string | null;
+  labelCount: number;
+  onMarkCompany: (company: string) => void;
+  onMarkLine: (id: string) => void;
+  onUnsure: () => void;
+  onSpecialist: (note: string) => void;
+  onNone: () => void;
+  onBack: () => void;
+  onReset: () => void;
+  onExport: () => void;
+  onClear: () => void;
+  specialistOpen: boolean;
+  setSpecialistOpen: (open: boolean) => void;
+}) {
+  const [note, setNote] = useState("");
+  return (
+    <div>
+      <Disclaimer />
+      {teaching ? (
+        <p className="mt-3 text-sm text-brass">
+          These cues came from a library schematic. They are not a reading of a patient film.
+        </p>
+      ) : null}
+      {result.clusterNote ? (
+        <p className="mt-4 rounded-md border border-border bg-card px-4 py-3 text-sm leading-relaxed">{result.clusterNote}</p>
+      ) : null}
+      {result.literature.length > 0 ? (
+        <section className="mt-4 rounded-lg border border-brass/40 bg-card px-4 py-3">
+          <h2 className="font-mono text-[11px] tracking-widest text-brass uppercase">Per the literature</h2>
+          <ul className="mt-2 space-y-3">
+            {result.literature.map((note) => (
+              <li key={note.text} className="text-sm leading-relaxed">
+                <p>{note.text}</p>
+                <a href={note.url} className="mt-1 inline-block text-xs text-brass hover:underline" target="_blank" rel="noreferrer">
+                  {note.cite}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+      {result.noEvidence ? (
+        <div className="mt-6 rounded-lg border border-dashed border-border px-4 py-10 text-center">
+          <p className="font-heading text-3xl">No cues, no ranking.</p>
+          <Button type="button" className="mt-4 h-11" onClick={onBack}>
+            Go back and mark what you see
+          </Button>
+        </div>
+      ) : (
+        <>
+        <p className="mt-6 text-sm text-muted-foreground">
+          The rank is the company. A line is named only when these cues separate it inside that company.
+        </p>
+        <ol className="mt-4 space-y-4" aria-live="polite">
+          {result.brands.map((brand, index) => {
+            const lead = brand.systems[0];
+            if (!lead) return null;
+            return (
+              <li
+                key={brand.company}
+                className={`grid gap-4 rounded-lg border bg-card p-4 md:grid-cols-[180px_1fr] ${
+                  index === 0 ? "border-brass/60" : "border-border"
+                }`}
+              >
+                <div className={brand.systems.length > 1 ? "grid grid-cols-2 gap-2" : ""}>
+                  {brand.systems.slice(0, 2).map((row) => (
+                    <div key={row.system.id}>
+                      <FixtureSchematic profile={row.system.schematic} className="h-44 w-full rounded-md" />
+                      <p className="mt-1 truncate text-center text-[11px] text-muted-foreground">{row.system.system}</p>
+                    </div>
+                  ))}
+                  {cropUrl && index === 0 ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={cropUrl}
+                      alt="Your crop beside the leading schematic"
+                      className="col-span-full mt-1 h-28 w-full rounded-md object-contain film"
+                    />
+                  ) : null}
+                </div>
+                <div>
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <p className="font-mono text-xs text-brass">0{index + 1} · company</p>
+                      <h2 className="font-heading text-4xl leading-none">{brand.company}</h2>
+                      {brand.manufacturer ? (
+                        <p className="mt-1 text-sm text-muted-foreground">Manufacturer · {brand.manufacturer}</p>
+                      ) : null}
+                      <p className="mt-2 text-sm text-bone/80">
+                        {brand.lineSettled
+                          ? `Line: ${lead.system.system}`
+                          : `Line not settled: ${brand.systems.map((row) => row.system.system).join(" · ")}`}
+                      </p>
+                    </div>
+                    <Badge variant="outline">
+                      {index > 0
+                        ? "Also possible"
+                        : !brand.companySettled
+                          ? "Company unsettled"
+                          : !brand.lineSettled
+                            ? "Company only"
+                            : result.evidence === "supported"
+                              ? "Clearer agreement"
+                              : result.evidence === "partial"
+                                ? "Partial"
+                                : "Thin evidence"}
+                    </Badge>
+                  </div>
+                  <div className="mt-3 max-w-sm">
+                    <ConfidenceMeter
+                      confidence={brand.confidence}
+                      prominent={index === 0}
+                      caption={
+                        index > 0
+                          ? "lower on these cues"
+                          : brand.companySettled
+                            ? "company agreement"
+                            : "company unsettled"
+                      }
+                    />
+                  </div>
+                  <p className="mt-4 text-sm leading-relaxed">{brand.why}</p>
+                  {brand.whyNot.length > 0 ? (
+                    <div className="mt-3">
+                      <p className="text-xs tracking-wide text-muted-foreground uppercase">Why it may be wrong</p>
+                      <ul className="mt-1 space-y-1 text-sm leading-relaxed text-muted-foreground">
+                        {brand.whyNot.map((line) => (
+                          <li key={line}>{line}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : null}
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {lead.matches.map((match) => (
+                      <Badge key={match.feature} variant="secondary">
+                        {match.phrase}
+                      </Badge>
+                    ))}
+                  </div>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <Button type="button" className="h-11" onClick={() => onMarkCompany(brand.company)}>
+                      This is the company I see
+                    </Button>
+                    {brand.lineSettled ? (
+                      <Button type="button" variant="outline" className="h-11" onClick={() => onMarkLine(lead.system.id)}>
+                        This line: {lead.system.system}
+                      </Button>
+                    ) : (
+                      brand.systems.map((row) => (
+                        <Button
+                          key={row.system.id}
+                          type="button"
+                          variant="outline"
+                          className="h-11"
+                          onClick={() => onMarkLine(row.system.id)}
+                        >
+                          Line: {row.system.system}
+                        </Button>
+                      ))
+                    )}
+                    <Link
+                      href={`/library/${lead.system.id}`}
+                      className="inline-flex h-11 items-center px-2 text-sm text-brass hover:underline"
+                    >
+                      Open in the library
+                    </Link>
+                  </div>
+                </div>
+              </li>
+            );
+          })}
+        </ol>
+        </>
+      )}
+
+      <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+        <Button type="button" variant="outline" className="h-11" onClick={onUnsure}>
+          Not sure — save and browse later
+        </Button>
+        <Button type="button" variant="outline" className="h-11" onClick={() => setSpecialistOpen(true)}>
+          Flag for a specialist
+        </Button>
+        <Button type="button" variant="outline" className="h-11" onClick={onNone}>
+          None of these
+        </Button>
+        <Link href="/library" className="inline-flex h-11 items-center text-sm text-brass hover:underline">
+          Browse the library
+        </Link>
+      </div>
+      {status ? (
+        <p role="status" className="mt-4 rounded-md border border-good/30 bg-good/10 px-3 py-2 text-sm">
+          {status}
+        </p>
+      ) : null}
+      <div className="mt-6 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+        <span>{labelCount} labels on this browser</span>
+        <button type="button" className="text-brass hover:underline" onClick={onExport}>
+          Export JSON
+        </button>
+        <button type="button" className="hover:underline" onClick={onClear}>
+          Clear labels
+        </button>
+        <button type="button" className="hover:underline" onClick={onBack}>
+          Edit cues
+        </button>
+        <button type="button" className="hover:underline" onClick={onReset}>
+          Start over
+        </button>
+      </div>
+
+      <Dialog open={specialistOpen} onOpenChange={setSpecialistOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Flag for a specialist</DialogTitle>
+            <DialogDescription>
+              This stores a note on this browser only. It does not send the film anywhere. Bring the radiograph and the surgical record to the person who will restore it.
+            </DialogDescription>
+          </DialogHeader>
+          <label className="text-sm">
+            Note
+            <textarea
+              value={note}
+              onChange={(event) => setNote(event.target.value)}
+              className="mt-1 min-h-24 w-full rounded-lg border border-input bg-transparent px-3 py-2 text-sm"
+              placeholder="What is ambiguous, and who should see it?"
+            />
+          </label>
+          <Button type="button" className="h-11" onClick={() => onSpecialist(note)}>
+            Save the flag
+          </Button>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+function SystemPicker({
+  open,
+  onOpenChange,
+  onPick,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onPick: (id: string) => void;
+}) {
+  const [query, setQuery] = useState("");
+  const filtered = SYSTEMS.filter((system) => {
+    const haystack = `${system.brand} ${system.system} ${system.aliases.join(" ")}`.toLowerCase();
+    return haystack.includes(query.trim().toLowerCase());
+  });
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Which company was it?</DialogTitle>
+          <DialogDescription>
+            Pick the company, then the line if you know it. The correction stays on this browser. The film is not stored.
+          </DialogDescription>
+        </DialogHeader>
+        <Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search systems" aria-label="Search systems" className="h-10" />
+        <ul className="max-h-80 space-y-1 overflow-auto">
+          {filtered.map((system) => (
+            <li key={system.id}>
+              <button
+                type="button"
+                className="flex w-full min-h-11 items-center justify-between rounded-md px-2 text-left text-sm hover:bg-muted"
+                onClick={() => onPick(system.id)}
+              >
+                <span>
+                  {identityOf(system).company} <span className="text-muted-foreground">{system.system}</span>
+                </span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function clampBox(box: Box): Box {
+  const w = Math.min(Math.max(box.w, 0.12), 1);
+  const h = Math.min(Math.max(box.h, 0.12), 1);
+  return {
+    w,
+    h,
+    x: Math.min(Math.max(box.x, 0), 1 - w),
+    y: Math.min(Math.max(box.y, 0), 1 - h),
+  };
+}
+
+function rasterFromCrop(image: HTMLImageElement, crop: Box): Raster {
+  const sx = crop.x * image.naturalWidth;
+  const sy = crop.y * image.naturalHeight;
+  const sw = Math.max(1, crop.w * image.naturalWidth);
+  const sh = Math.max(1, crop.h * image.naturalHeight);
+  const scale = Math.min(1, 720 / sw);
+  const width = Math.max(1, Math.round(sw * scale));
+  const height = Math.max(1, Math.round(sh * scale));
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const context = canvas.getContext("2d");
+  if (!context) return { width: 1, height: 1, data: new Uint8ClampedArray(4) };
+  context.drawImage(image, sx, sy, sw, sh, 0, 0, width, height);
+  return { width, height, data: context.getImageData(0, 0, width, height).data };
+}
+
+function rasterToDataUrl(raster: Raster) {
+  const canvas = document.createElement("canvas");
+  canvas.width = raster.width;
+  canvas.height = raster.height;
+  const context = canvas.getContext("2d");
+  if (!context) return "";
+  const copy = new Uint8ClampedArray(raster.data.byteLength);
+  copy.set(raster.data);
+  context.putImageData(new ImageData(copy, raster.width, raster.height), 0, 0);
+  return canvas.toDataURL("image/png");
 }
