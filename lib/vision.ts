@@ -314,7 +314,7 @@ export function analyzeRaster(raster: Raster, polarity: Polarity = "bright"): Vi
     let value = luminance(data, i * 4);
     if (polarity === "dark") value = 255 - value;
     lum[i] = value;
-    hist[Math.max(0, Math.min(255, Math.round(value)))]++ ;
+    hist[Math.max(0, Math.min(255, Math.round(value)))]++;
   }
   // Otsu lands on the background bin when the two peaks have an empty valley.
   // Step one gray level forward so the background itself is excluded.
