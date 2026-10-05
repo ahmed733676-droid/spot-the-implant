@@ -722,6 +722,7 @@ export const SYSTEMS: ImplantSystem[] = [
     ],
     pitfalls: [
       "A coarse V-thread is not a knife thread. The blades should look thin relative to the gaps.",
+      "ST is the other MegaGen KnifeThread line in this library. Count a double lead before calling ST rather than AnyRidge. Vetronix is a chair-side name for that ST line, not a second company.",
     ],
     accepts: {
       collar: ["bone-level"],
@@ -760,6 +761,86 @@ export const SYSTEMS: ImplantSystem[] = [
         title: "MegaGen AnyRidge — KnifeThread",
         url: "https://imegagen.com/product/1292/",
         kind: "brochure",
+      },
+    ],
+  },
+  {
+    id: "megagen-st",
+    brand: "MegaGen",
+    system: "ST",
+    aliases: ["Vetronix", "ST MegaGen", "MegaGen ST", "KnifeThread"],
+    summary:
+      "MegaGen ST: an 11° internal hex, bone-level, with KnifeThread added to a double thread. The same public page also lists a simple regular thread and a deep thread, so a film does not prove which variant was placed.",
+    lookFor: [
+      "Repeated knife-thin blades and a narrow core, the MegaGen family sign shared with AnyRidge.",
+      "A tapered body. Mild taper alone is not enough — the thread has to be deep.",
+      "A double thread when the starts can be counted. That is the line split from AnyRidge.",
+    ],
+    pitfalls: [
+      "Ankylos also deepens toward the apex, but that is one progressive thread, not a repeated knife blade. A mild taper does not make this Ankylos.",
+      "The 11° hex is internal. Do not call a subcrestal cone from this fixture.",
+      "Vetronix is the name a chair used for this MegaGen ST family. MegaGen’s public pages were not found to publish that trade name.",
+    ],
+    accepts: {
+      collar: ["bone-level"],
+      connection: ["internal-hex"],
+      body: ["mild-taper", "strong-taper"],
+      thread: ["knife"],
+      apex: ["rounded"],
+      platformSwitch: ["no"],
+      lead: ["double"],
+      microgap: ["crestal"],
+    },
+    signatures: [
+      {
+        all: [{ feature: "thread", value: "knife" }],
+        boost: 2.8,
+        note: "KnifeThread is the MegaGen family sign, shared here with AnyRidge until a lead separates them.",
+      },
+      {
+        all: [
+          { feature: "thread", value: "knife" },
+          { feature: "lead", value: "double" },
+        ],
+        boost: 1.4,
+        note: "The ST brochure adds KnifeThread to a double thread. That is the line split from AnyRidge when the starts are visible.",
+      },
+    ],
+    twins: [],
+    confusers: [
+      {
+        id: "ankylos",
+        note: "Ankylos deepens one progressive thread toward the apex. It is not a repeated knife blade, and a mild taper alone does not make it Ankylos.",
+      },
+      {
+        id: "megagen-anyridge",
+        note: "AnyRidge is the other MegaGen KnifeThread line. Leave the line open unless a double lead is actually visible.",
+      },
+    ],
+    schematic: {
+      collar: "none",
+      body: "mild",
+      thread: "knife",
+      apex: "round",
+      connection: "int-hex",
+      platformSwitch: false,
+    },
+    sources: [
+      {
+        title: "MegaGen ST — 11° internal hex, KnifeThread integrated into a double thread",
+        url: "https://imegagen.com/product/22045/",
+        kind: "brochure",
+      },
+      {
+        title: "MegaGen ST brochure: KnifeThread combined with double thread",
+        url: "https://www.imegagen.es/wp-content/uploads/2024/10/ST_ENG_REV.03-V2-1.pdf",
+        kind: "brochure",
+      },
+      {
+        title:
+          "Straight head, dome apex, and the absence of a platform switch are a reading of the ST drawing, not a quoted sentence. Vetronix is a chair-side alias from a labeled film (Ahmed, Cairo, 6 Oct 2026), not a trade name found on MegaGen’s public pages.",
+        url: "https://imegagen.com/product/22045/",
+        kind: "interpretation",
       },
     ],
   },

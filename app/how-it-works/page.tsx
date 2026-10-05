@@ -17,12 +17,12 @@ const steps = [
     body: "The score is only as honest as the crop. Include a transmucosal collar. Exclude the crown. A CBCT series is one exported frame, not a volume.",
   },
   {
-    title: "Cues, then a score",
-    body: "Seven features: neck, interface, body, thread, apex, platform step, and thread starts. Unknowns are skipped. Contradictions cost the system the points. A few shapes — tulip, knife thread, convergent neck, tube-in-tube, subcrestal cone — carry an extra, documented boost.",
+    title: "Cues become evidence",
+    body: "What you confirm is hard evidence. An image measurement of neck, taper, thread, or apex stays in the same list as a soft cue until you confirm or replace it. A mild taper by itself does not name a company. A knife thread, a tulip, a convergent neck, tube-in-tube, or a subcrestal cone can move a family up the list.",
   },
   {
-    title: "Image cues are optional",
-    body: "A small on-device measurement can suggest neck, taper, thread, and apex from the crop. It does not see the connection. Nothing is applied until you accept it. Polarity can be flipped if the fixture is displayed dark.",
+    title: "Then a company, then a line",
+    body: "The short list is a differential. Twins such as Osstem and Hiossen are refused. A line inside the company is named only when these cues separate it. MegaGen ST and AnyRidge stay open on knife threads until a double lead is actually visible. Polarity can be flipped if the fixture is displayed dark. The connection is never guessed.",
   },
   {
     title: "The crop is three bands",

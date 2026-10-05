@@ -96,7 +96,10 @@ export function Workstation() {
   }, [params]);
 
   const vision = useMemo(() => (raster ? analyzeRaster(raster, polarity) : null), [raster, polarity]);
-  const result = useMemo(() => rankSystems(observation), [observation]);
+  const result = useMemo(
+    () => rankSystems(observation, SYSTEMS, 5, vision?.cues ?? []),
+    [observation, vision],
+  );
 
   async function takeFile(file: File) {
     setError(null);
@@ -648,7 +651,7 @@ function CueStage({
           </div>
         </fieldset>
         <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
-          Image measurement can suggest collar, taper, thread, and apex. It does not read the junction line or the connection.
+          Image measurement of collar, taper, thread, and apex already counts as soft evidence. Accept a cue to confirm it, or pick another value to replace it. The junction line and the connection are never guessed.
         </p>
         <div className="mt-5 space-y-5">
           {FEATURE_KEYS.map((feature) => {
@@ -709,6 +712,13 @@ function CueStage({
       </div>
     </div>
   );
+}
+
+function lineCaption(system: { system: string; aliases: string[] }) {
+  if (system.aliases.some((alias) => alias.toLowerCase() === "vetronix")) {
+    return `${system.system} (also called Vetronix)`;
+  }
+  return system.system;
 }
 
 function ResultStage({
@@ -793,14 +803,14 @@ function ResultStage({
               <li
                 key={brand.company}
                 className={`grid gap-4 rounded-lg border bg-card p-4 md:grid-cols-[180px_1fr] ${
-                  index === 0 ? "border-brass/60" : "border-border"
+                  result.flat || index > 0 ? "border-border" : "border-brass/60"
                 }`}
               >
                 <div className={brand.systems.length > 1 ? "grid grid-cols-2 gap-2" : ""}>
                   {brand.systems.slice(0, 2).map((row) => (
                     <div key={row.system.id}>
                       <FixtureSchematic profile={row.system.schematic} className="h-44 w-full rounded-md" />
-                      <p className="mt-1 truncate text-center text-[11px] text-muted-foreground">{row.system.system}</p>
+                      <p className="mt-1 truncate text-center text-[11px] text-muted-foreground">{lineCaption(row.system)}</p>
                     </div>
                   ))}
                   {cropUrl && index === 0 ? (
@@ -815,29 +825,35 @@ function ResultStage({
                 <div>
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
-                      <p className="font-mono text-xs text-brass">0{index + 1} · company</p>
+                      <p className="font-mono text-xs text-brass">
+                        {result.flat ? "Same evidence" : `0${index + 1} · company`}
+                      </p>
                       <h2 className="font-heading text-4xl leading-none">{brand.company}</h2>
                       {brand.manufacturer ? (
                         <p className="mt-1 text-sm text-muted-foreground">Manufacturer · {brand.manufacturer}</p>
                       ) : null}
                       <p className="mt-2 text-sm text-bone/80">
-                        {brand.lineSettled
-                          ? `Line: ${lead.system.system}`
-                          : `Line not settled: ${brand.systems.map((row) => row.system.system).join(" · ")}`}
+                        {result.flat
+                          ? "Line not called. Same generic cues."
+                          : brand.lineSettled
+                            ? `Line: ${lineCaption(lead.system)}`
+                            : `Line not settled: ${brand.systems.map((row) => lineCaption(row.system)).join(" · ")}`}
                       </p>
                     </div>
                     <Badge variant="outline">
-                      {index > 0
-                        ? "Also possible"
-                        : !brand.companySettled
-                          ? "Company unsettled"
-                          : !brand.lineSettled
-                            ? "Company only"
-                            : result.evidence === "supported"
-                              ? "Clearer agreement"
-                              : result.evidence === "partial"
-                                ? "Partial"
-                                : "Thin evidence"}
+                      {result.flat
+                        ? "Same evidence"
+                        : index > 0
+                          ? "Also possible"
+                          : !brand.companySettled
+                            ? "Company unsettled"
+                            : !brand.lineSettled
+                              ? "Company only"
+                              : result.evidence === "supported"
+                                ? "Clearer agreement"
+                                : result.evidence === "partial"
+                                  ? "Partial"
+                                  : "Thin evidence"}
                     </Badge>
                   </div>
                   <div className="mt-3 max-w-sm">
@@ -845,11 +861,15 @@ function ResultStage({
                       confidence={brand.confidence}
                       prominent={index === 0}
                       caption={
-                        index > 0
-                          ? "lower on these cues"
-                          : brand.companySettled
-                            ? "company agreement"
-                            : "company unsettled"
+                        result.flat
+                          ? "not a ranking"
+                          : index > 0
+                            ? brand.confidence + 0.005 < (result.brands[0]?.confidence ?? 1)
+                              ? "lower on these cues"
+                              : "same cap on these cues"
+                            : brand.companySettled
+                              ? "company agreement"
+                              : "company unsettled"
                       }
                     />
                   </div>
@@ -868,6 +888,7 @@ function ResultStage({
                     {lead.matches.map((match) => (
                       <Badge key={match.feature} variant="secondary">
                         {match.phrase}
+                        {match.source === "vision" ? " · image" : ""}
                       </Badge>
                     ))}
                   </div>

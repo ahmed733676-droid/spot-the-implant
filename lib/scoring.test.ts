@@ -387,4 +387,76 @@ describe("rankSystems", () => {
       expect(scores[i]).toBeLessThanOrEqual(scores[i - 1] + 0.02);
     }
   });
+
+  it("does not crown Ankylos from a mild taper, and keeps the percents monotonic", () => {
+    const result = rankSystems(observe({ body: "mild-taper" }));
+    expect(result.flat).toBe(true);
+    expect(result.brands.every((brand) => brand.companySettled === false)).toBe(true);
+    expect(result.clusterNote).toMatch(/not a ranking|not called/i);
+    expect(result.clusterNote).toMatch(/Ankylos/);
+    expect(result.clusterNote).toMatch(/MegaGen/);
+    const percents = result.brands.map((brand) => agreementPercent(brand.confidence));
+    expect(new Set(percents).size).toBe(1);
+    for (let i = 1; i < percents.length; i++) {
+      expect(percents[i]).toBeLessThanOrEqual(percents[i - 1]);
+    }
+  });
+
+  it("puts the MegaGen family first when knife threads and a mild taper are marked", () => {
+    const result = rankSystems(
+      observe({
+        collar: "bone-level",
+        body: "mild-taper",
+        thread: "knife",
+      }),
+    );
+    expect(result.brands[0]?.company).toBe("MegaGen");
+    expect(result.brands[0]?.company).not.toBe("Ankylos");
+    expect(result.ranked[0]?.system.id).not.toBe("ankylos");
+    const lines = result.brands[0]?.systems.map((row) => row.system.id) ?? [];
+    expect(lines).toEqual(expect.arrayContaining(["megagen-st", "megagen-anyridge"]));
+    expect(result.brands[0]?.lineSettled).toBe(false);
+    expect(result.brands[0]?.why.toLowerCase()).toMatch(/vetronix|st/);
+    const percents = result.brands.map((brand) => agreementPercent(brand.confidence));
+    for (let i = 1; i < percents.length; i++) {
+      expect(percents[i]).toBeLessThanOrEqual(percents[i - 1]);
+    }
+  });
+
+  it("lets a double lead separate MegaGen ST from AnyRidge", () => {
+    const result = rankSystems(
+      observe({
+        collar: "bone-level",
+        body: "mild-taper",
+        thread: "knife",
+        lead: "double",
+      }),
+    );
+    expect(result.brands[0]?.company).toBe("MegaGen");
+    expect(result.brands[0]?.lineSettled).toBe(true);
+    expect(result.brands[0]?.systems[0]?.system.id).toBe("megagen-st");
+  });
+
+  it("feeds a soft image knife cue into the same company differential", () => {
+    const result = rankSystems(observe({ body: "mild-taper" }), SYSTEMS, 5, [
+      {
+        feature: "thread",
+        value: "knife",
+        strength: "moderate",
+        note: "Deep repeated blades.",
+      },
+    ]);
+    expect(result.brands[0]?.company).toBe("MegaGen");
+    expect(result.brands[0]?.companySettled).toBe(false);
+    expect(result.brands[0]?.confidence).toBeLessThanOrEqual(0.34);
+    expect(result.ranked[0]?.system.id).not.toBe("ankylos");
+    expect(result.brands[0]?.systems[0]?.matches.some((match) => match.source === "vision" && match.value === "knife")).toBe(
+      true,
+    );
+    const percents = result.brands.map((brand) => agreementPercent(brand.confidence));
+    for (let i = 1; i < percents.length; i++) {
+      expect(percents[i]).toBeLessThanOrEqual(percents[i - 1]);
+    }
+    expect(result.literature.some((note) => /thread form|knife/i.test(note.text))).toBe(true);
+  });
 });

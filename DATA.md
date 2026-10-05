@@ -1,10 +1,10 @@
 # Data
 
-Spot the Implant scores a checklist against 25 catalog entries. Schematics are drawn from those entries. They are not radiographs, and they are not manufacturer photography.
+Spot the Implant scores a checklist against 26 catalog entries. Schematics are drawn from those entries. They are not radiographs, and they are not manufacturer photography.
 
 Nothing in this file was taken from a paywalled instructions-for-use PDF. If a feature is a teaching inference rather than a sentence in the linked document, the library marks that source `interpretation`.
 
-Accessed 5 October 2026.
+Accessed 5 October 2026. MegaGen ST and the Vetronix alias were added 6 October 2026.
 
 ## Company versus line
 
@@ -68,7 +68,8 @@ Manufacturer brochures below still supply the catalog shape of each line. The pa
 | `biohorizons-ti` | BioHorizons | Tapered Internal | bone level or Laser-Lok band | 1.5 mm internal hex / 45° lead-in | mild or strong | buttress | Buttress flank. Laser-Lok is not visible proof |
 | `osstem-tsiii` | Osstem | TS III | bone level | internal cone | mild taper | standard, double lead | Twin of Hiossen ET III |
 | `hiossen-etiii` | Hiossen | ET III | bone level | internal cone | mild taper | standard, double lead | Twin of Osstem TS III. Do not split them on one film |
-| `megagen-anyridge` | MegaGen | AnyRidge | bone level | internal cone | tapered core | KnifeThread | Thin, deep blades |
+| `megagen-anyridge` | MegaGen | AnyRidge | bone level | internal cone | tapered core | KnifeThread | Thin, deep blades. Same company as ST until a lead is visible |
+| `megagen-st` | MegaGen | ST (chair-side alias Vetronix) | bone level | 11° internal hex | mild or strong taper | KnifeThread added to a double thread | Company is MegaGen when the blades are knife-deep. The line settles on ST only when a double lead is marked. Vetronix is an interpretation |
 | `mis-seven` | MIS | SEVEN | bone level | internal hex | mild taper | standard, double lead | Hex, not the C1 cone |
 | `mis-c1` | MIS | C1 | bone level | internal cone | mild taper | standard, double lead | Generic cone unless the record already says MIS |
 | `dentium-implantium` | Dentium | Implantium | microthread | internal hex | mild taper | standard, double lead | Microthread on a hex, not Astra’s cone |
@@ -98,6 +99,7 @@ Body, lead, and apex values for Osstem, Hiossen, MIS C1, Implantium, Southern, B
 - FDA K133339 (TSV external triple-lead thread; machined collar or texturing to the top). https://www.accessdata.fda.gov/cdrh_docs/pdf13/K133339.pdf
 - BioHorizons Tapered Internal (buttress thread, Laser-Lok, 1.5 mm internal hex, 45° lead-in). https://www.biohorizons.com/Products/Tapered
 - MegaGen AnyRidge KnifeThread. https://imegagen.com/product/1292/
+- MegaGen ST: 11° internal hex, KnifeThread integrated into a double thread. https://imegagen.com/product/22045/ and the ST brochure https://www.imegagen.es/wp-content/uploads/2024/10/ST_ENG_REV.03-V2-1.pdf
 - Camlog Tube-in-Tube and Progressive-Line. https://www.camlog.com/en/products/implant-systems/camlog
 - MIS SEVEN catalog (internal hex). https://www.mis-implants.com/upload/PDF/Products/Implants/MIS_SEVEN_Catalog.pdf
 - Dentium SuperLine II (double thread, one conical connection, hex index). https://www.dentiumusa.com/products/implant-systems/superline-2
@@ -122,6 +124,14 @@ Body, lead, and apex values for Osstem, Hiossen, MIS C1, Implantium, Southern, B
 ### Secondary design summary
 
 - Implant Atlas, NobelActive versus Straumann BLX (double lead, expanding taper, and reverse-cutting apex on NobelActive; variable pitch on BLX). Used as a design summary of public brochures, not as a clinical atlas. https://nobel-implants.com/compare/nobelactive-vs-straumann-blx/
+
+## Labeled miss, 6 Oct 2026
+
+Ahmed labeled a periapical, photographed off a Sopix screen in Cairo, as Vetronix or ST MegaGen. The build then in production marked only “mild taper,” ignored the thread measurement, and returned Ankylos at 21% with four later cards at 34%. MegaGen was not on the short list.
+
+That ranking is treated as a logic failure, not as a new ground truth for Ankylos. Mild taper is generic. Deep knife threads are the MegaGen family sign. The line between ST and AnyRidge stays open unless a double lead is confirmed. Vetronix is stored as an alias of `megagen-st` with source kind `interpretation`: it is the name used in that chair. A public MegaGen page equating the two trade names was not found, and a similarly spelled Italian brand was not used as evidence.
+
+The radiograph itself is not in this repository.
 
 ## What was deliberately left out
 

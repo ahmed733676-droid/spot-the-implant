@@ -42,6 +42,16 @@ function otsu(hist: number[], total: number) {
   return threshold;
 }
 
+function percentileThreshold(hist: number[], total: number, fraction: number) {
+  const need = total * fraction;
+  let acc = 0;
+  for (let i = 0; i < 256; i++) {
+    acc += hist[i];
+    if (acc >= need) return i;
+  }
+  return 255;
+}
+
 function median(values: number[]) {
   if (values.length === 0) return 0;
   const sorted = [...values].sort((a, b) => a - b);
@@ -86,6 +96,117 @@ function lowerEnvelope(values: number[]) {
   });
 }
 
+function smooth(values: number[], radius: number) {
+  return values.map((_, index) => {
+    let sum = 0;
+    let count = 0;
+    for (let offset = -radius; offset <= radius; offset++) {
+      const value = values[index + offset];
+      if (value == null) continue;
+      sum += value;
+      count++;
+    }
+    return count ? sum / count : 0;
+  });
+}
+
+/** Bands of columns that actually contain fixture pixels, split by a dark gap. */
+function fixtureBands(
+  lum: Float32Array,
+  width: number,
+  height: number,
+  threshold: number,
+): { start: number; end: number; mass: number }[] {
+  const y0 = Math.floor(height * 0.05);
+  const y1 = Math.ceil(height * 0.96);
+  const mass = new Array<number>(width).fill(0);
+  for (let x = 0; x < width; x++) {
+    for (let y = y0; y < y1; y++) {
+      if (lum[y * width + x] >= threshold) mass[x] += 1;
+    }
+  }
+  const bands: { start: number; end: number; mass: number }[] = [];
+  let start = -1;
+  let gap = 0;
+  for (let x = 0; x <= width; x++) {
+    const on = x < width && mass[x] > 0;
+    if (on) {
+      if (start < 0) start = x;
+      gap = 0;
+      continue;
+    }
+    gap += 1;
+    if (start >= 0 && (gap >= 3 || x === width)) {
+      const end = x - gap;
+      let sum = 0;
+      for (let col = start; col <= end; col++) sum += mass[col] ?? 0;
+      if (end >= start && sum >= height * 0.08) bands.push({ start, end, mass: sum });
+      start = -1;
+    }
+  }
+  return bands;
+}
+
+function widthsInBand(
+  lum: Float32Array,
+  width: number,
+  height: number,
+  threshold: number,
+  band: { start: number; end: number },
+) {
+  const widths: number[] = [];
+  const counts: number[] = [];
+  for (let y = 0; y < height; y++) {
+    let minX = band.end;
+    let maxX = band.start;
+    let count = 0;
+    for (let x = band.start; x <= band.end; x++) {
+      if (lum[y * width + x] >= threshold) {
+        if (count === 0 || x < minX) minX = x;
+        if (count === 0 || x > maxX) maxX = x;
+        count++;
+      }
+    }
+    widths.push(count > 0 ? maxX - minX + 1 : 0);
+    counts.push(count);
+  }
+  return { widths, counts };
+}
+
+/**
+ * Knife blades leave a narrow core between deep notches.
+ * Peak width is the outer blade. Trough width is the core.
+ * Standard and fine threads stay well above this ratio, so they are not relabeled.
+ */
+function knifeNotches(widths: number[]): { knife: boolean; peaks: number; ratio: number } {
+  const smoothed = smooth(widths, 1);
+  const usable = smoothed.filter((value) => value > 2);
+  if (usable.length < 16) return { knife: false, peaks: 0, ratio: 1 };
+  const med = median(usable);
+  const peaks: number[] = [];
+  const troughs: number[] = [];
+  for (let index = 2; index < smoothed.length - 2; index++) {
+    const value = smoothed[index];
+    if (value <= 2) continue;
+    const peak =
+      value >= smoothed[index - 1] &&
+      value > smoothed[index - 2] &&
+      value >= smoothed[index + 1] &&
+      value > smoothed[index + 2];
+    const trough =
+      value <= smoothed[index - 1] &&
+      value < smoothed[index - 2] &&
+      value <= smoothed[index + 1] &&
+      value < smoothed[index + 2];
+    if (peak && value > med * 0.8) peaks.push(value);
+    if (trough && value < med) troughs.push(value);
+  }
+  if (peaks.length < 4 || troughs.length < 3) return { knife: false, peaks: peaks.length, ratio: 1 };
+  const ratio = median(troughs) / median(peaks);
+  const depth = (median(peaks) - median(troughs)) / med;
+  return { knife: ratio < 0.58 && depth >= 0.16, peaks: peaks.length, ratio };
+}
+
 function bestPeriod(values: number[]): { period: number; amplitude: number } | null {
   if (values.length < 20) return null;
   const detrended = detrendLinear(values);
@@ -118,6 +239,73 @@ function bestPeriod(values: number[]): { period: number; amplitude: number } | n
   return { period: bestLag, amplitude };
 }
 
+type FixtureMeasure = {
+  widths: number[];
+  grooves: number[];
+  /** True when the first threshold covered the whole bright screen and a higher one was required. */
+  saturated: boolean;
+  knife: boolean;
+  knifeRatio: number;
+};
+
+function rankBands(
+  lum: Float32Array,
+  width: number,
+  height: number,
+  threshold: number,
+  minPresent: number,
+  maxFraction: number,
+) {
+  return fixtureBands(lum, width, height, threshold)
+    .map((band) => {
+      const measured = widthsInBand(lum, width, height, threshold, band);
+      const present = measured.widths.filter((value) => value > 2);
+      const fraction = (band.end - band.start + 1) / width;
+      const threadiness = present.length ? stddev(present) / (median(present) || 1) : 0;
+      return { band, ...measured, present: present.length, fraction, threadiness };
+    })
+    .filter((item) => item.present >= minPresent && item.fraction <= maxFraction && item.fraction >= 0.04)
+    .sort((a, b) => b.threadiness - a.threadiness || b.band.mass - a.band.mass);
+}
+
+/**
+ * A schematic has one bright object, so Otsu is enough.
+ * A photo of a monitor is bright almost everywhere. Otsu then outlines the screen.
+ * In that case the fixture is the tall object in the top few percent of gray values.
+ */
+function measureFixture(
+  lum: Float32Array,
+  width: number,
+  height: number,
+  hist: number[],
+  otsuThreshold: number,
+): FixtureMeasure | null {
+  const plain = { knife: false, knifeRatio: 1 };
+  const primary = rankBands(lum, width, height, otsuThreshold, height * 0.18, 0.85);
+  const top = primary[0];
+  if (top && top.fraction <= 0.7) {
+    return { widths: top.widths, grooves: top.counts, saturated: false, ...plain };
+  }
+  let best: (typeof primary)[number] | null = null;
+  let bestNotch = plain;
+  for (const fraction of [0.985, 0.99, 0.993]) {
+    const threshold = Math.max(otsuThreshold + 8, percentileThreshold(hist, width * height, fraction));
+    const bands = rankBands(lum, width, height, threshold, height * 0.18, 0.45);
+    const candidate = bands[0];
+    if (!candidate) continue;
+    const notch = knifeNotches(candidate.counts);
+    const betterKnife = notch.knife && notch.ratio < bestNotch.knifeRatio;
+    if (betterKnife) {
+      best = candidate;
+      bestNotch = { knife: true, knifeRatio: notch.ratio };
+      continue;
+    }
+    if (!bestNotch.knife && (!best || candidate.threadiness > best.threadiness)) best = candidate;
+  }
+  if (!best) return top ? { widths: top.widths, grooves: top.counts, saturated: false, ...plain } : null;
+  return { widths: best.widths, grooves: best.counts, saturated: true, ...bestNotch };
+}
+
 export function analyzeRaster(raster: Raster, polarity: Polarity = "bright"): VisionReport {
   const { width, height, data } = raster;
   const hist = new Array<number>(256).fill(0);
@@ -131,21 +319,20 @@ export function analyzeRaster(raster: Raster, polarity: Polarity = "bright"): Vi
   // Otsu lands on the background bin when the two peaks have an empty valley.
   // Step one gray level forward so the background itself is excluded.
   const threshold = otsu(hist, width * height) + 1;
-  const widths: number[] = [];
-  for (let y = 0; y < height; y++) {
-    let minX = width;
-    let maxX = -1;
-    for (let x = 0; x < width; x++) {
-      if (lum[y * width + x] >= threshold) {
-        if (x < minX) minX = x;
-        if (x > maxX) maxX = x;
-      }
-    }
-    widths.push(maxX >= minX ? maxX - minX + 1 : 0);
+  const measured = measureFixture(lum, width, height, hist, threshold);
+  if (!measured) {
+    return {
+      cues: [],
+      notes: [
+        "The crop did not contain a clear bright fixture. Check polarity, or mark the cues yourself.",
+      ],
+    };
   }
+  const widths = measured.widths;
+  const saturated = measured.saturated;
 
   const present = widths.filter((value) => value > 2);
-  if (present.length < height * 0.25) {
+  if (present.length < height * 0.18) {
     return {
       cues: [],
       notes: [
@@ -176,7 +363,7 @@ export function analyzeRaster(raster: Raster, polarity: Polarity = "bright"): Vi
   const apexLate = span.slice(Math.floor(n * 0.9)).filter((value) => value > 0);
   const cues: VisionCue[] = [];
   const notes: string[] = [
-    "Image cues are measurements of this crop, not a model of implant identity. Accept or ignore each one.",
+    "Image cues are measurements of this crop. They enter the same evidence list as a soft cue until you confirm or replace them.",
   ];
 
   if (collarSlice.length && bodySlice.length) {
@@ -250,7 +437,17 @@ export function analyzeRaster(raster: Raster, polarity: Polarity = "bright"): Vi
   }
 
   const thread = bestPeriod(bodySlice);
-  if (thread) {
+  const notches = saturated
+    ? { knife: measured.knife, peaks: 0, ratio: measured.knifeRatio }
+    : knifeNotches(span);
+  if (notches.knife) {
+    cues.push({
+      feature: "thread",
+      value: "knife",
+      strength: saturated || notches.ratio < 0.5 ? "moderate" : "low",
+      note: "The core between the blades is narrow and the notches repeat. That reads as deep knife threads, including when a neighboring tooth is in the frame.",
+    });
+  } else if (thread) {
     const relative = thread.period / Math.max(n, 1);
     let value = "standard";
     if (relative < 0.034) value = "fine";
@@ -281,5 +478,11 @@ export function analyzeRaster(raster: Raster, polarity: Polarity = "bright"): Vi
   }
 
   notes.push("Connection geometry is not inferred from a crop.");
+  if (saturated) {
+    // A photographed screen is bright to the edges. Neck flare and the apex are
+    // not reliable there. Thread notches and body taper still are.
+    const kept = cues.filter((cue) => cue.feature === "thread" || cue.feature === "body");
+    cues.splice(0, cues.length, ...kept);
+  }
   return { cues, notes };
 }
