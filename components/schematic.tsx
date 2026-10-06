@@ -39,7 +39,7 @@ export function FixtureSchematic({
         </clipPath>
       </defs>
       {seat.internal ? (
-        <g clipPath={`url(#${clipId})}>
+        <g clipPath={"url(#" + clipId + ")"}>
           <ConnectionMark profile={profile} cx={cx} top={outline.topY} />
         </g>
       ) : (
