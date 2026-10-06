@@ -5,6 +5,7 @@ import type { RankResult } from "@/lib/pipeline/types";
 import { notesFor } from "@/lib/literature";
 import { getSystem, SYSTEMS } from "@/lib/systems";
 import type { FeatureKey, ImplantSystem, Observation } from "@/lib/types";
+import type { ShapeHit } from "@/lib/twins/types";
 import type { VisionCue } from "@/lib/vision";
 
 export type { FeatureNote, RankedBrand, RankedSystem, RankResult } from "@/lib/pipeline/types";
@@ -27,6 +28,7 @@ export function rankSystems(
   limit = 2,
   vision: readonly VisionCue[] = [],
   acceptedFromImage: readonly FeatureKey[] = [],
+  shapeHits: readonly ShapeHit[] = [],
 ): RankResult {
   const cues = extractEvidence(observation, vision, acceptedFromImage);
   if (cues.length === 0) {
@@ -39,6 +41,7 @@ export function rankSystems(
       flat: false,
       clusterNote: "Mark at least one radiographic cue. With nothing marked, every system is equally possible.",
       libraryUnsure: null,
+      shapeAside: null,
       literature: [],
     };
   }
@@ -48,6 +51,7 @@ export function rankSystems(
     cues,
     observation,
     limit,
+    shapeHits,
   });
 
   const literature = notesFor({
