@@ -321,7 +321,11 @@ export function differentiate(input: {
   });
 
   const bestShape = shapeHits[0] ?? null;
-  if (bestShape && bestShape.score >= 0.62 && bestShape.libraryId) {
+  const nextShape = shapeHits[1] ?? null;
+  const shapeGap = bestShape && nextShape ? bestShape.score - nextShape.score : 1;
+  const shapeEligible = Boolean(bestShape && bestShape.score >= 0.62 && bestShape.libraryId);
+  const shapeClear = shapeEligible && shapeGap >= 0.04;
+  if (shapeClear && bestShape) {
     const matched = scored.find((entry) => entry.system.id === bestShape.libraryId);
     const company = matched ? identityOf(matched.system).company : null;
     for (const brand of draft) {
@@ -394,8 +398,13 @@ export function differentiate(input: {
   const brands: RankedBrand[] = draft.slice(0, Math.max(1, limit)).map((brand) => withoutScore(brand));
   const ranked: RankedSystem[] = presented.slice(0, limit).map((row) => withoutScore(row));
   const shapeOnCard = brands.some((brand) => brand.shapeNote);
-  const shapeAside =
-    bestShape && bestShape.score >= 0.62 && bestShape.libraryId && !shapeOnCard ? bestShape.sentence : null;
+  const shapeAside = shapeOnCard
+    ? null
+    : shapeClear && bestShape
+      ? bestShape.sentence
+      : shapeEligible
+        ? "Shape match is split. The closest drawings fit this outline about equally, so the silhouette does not pick a company."
+        : null;
   const libraryUnsure = unsureLibrary({
     cues: input.cues,
     scored,

@@ -541,6 +541,38 @@ describe("rankSystems", () => {
     expect(tulip.shapeAside).toMatch(/Parametric approximation/);
   });
 
+  it("does not name a company when the closest silhouettes are tied", () => {
+    const pose = { lengthMm: 10, diameterMm: 4.5, mdDeg: 0, blDeg: 0, spinDeg: 0 };
+    const result = rankSystems(
+      observe({ body: "strong-taper", thread: "knife" }),
+      SYSTEMS,
+      2,
+      [],
+      [],
+      [
+        {
+          systemId: "zimmer-tsv",
+          libraryId: "zimmer-tsv",
+          name: "Zimmer Tapered Screw-Vent",
+          score: 0.8,
+          pose,
+          sentence: "Shape match 80 for Zimmer Tapered Screw-Vent.",
+        },
+        {
+          systemId: "nobel-active",
+          libraryId: "nobel-active",
+          name: "NobelActive",
+          score: 0.78,
+          pose,
+          sentence: "Shape match 78 for NobelActive.",
+        },
+      ],
+    );
+    expect(result.brands.every((brand) => brand.shapeNote == null)).toBe(true);
+    expect(result.shapeAside).toMatch(/does not pick a company/);
+    expect(result.shapeAside).not.toMatch(/Zimmer/);
+  });
+
   it("does not call a clean tissue-level film unknown", () => {
     const result = rankSystems(canonicalObservation(SYSTEMS.find((system) => system.id === "straumann-tl")!));
     expect(result.libraryUnsure).toBeNull();
