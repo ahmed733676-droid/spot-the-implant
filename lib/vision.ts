@@ -246,6 +246,8 @@ type FixtureMeasure = {
   saturated: boolean;
   knife: boolean;
   knifeRatio: number;
+  band: { start: number; end: number };
+  threshold: number;
 };
 
 function rankBands(
@@ -284,10 +286,18 @@ function measureFixture(
   const primary = rankBands(lum, width, height, otsuThreshold, height * 0.18, 0.85);
   const top = primary[0];
   if (top && top.fraction <= 0.7) {
-    return { widths: top.widths, grooves: top.counts, saturated: false, ...plain };
+    return {
+      widths: top.widths,
+      grooves: top.counts,
+      saturated: false,
+      ...plain,
+      band: top.band,
+      threshold: otsuThreshold,
+    };
   }
   let best: (typeof primary)[number] | null = null;
   let bestNotch = plain;
+  let bestThreshold = otsuThreshold;
   for (const fraction of [0.985, 0.99, 0.993]) {
     const threshold = Math.max(otsuThreshold + 8, percentileThreshold(hist, width * height, fraction));
     const bands = rankBands(lum, width, height, threshold, height * 0.18, 0.45);
@@ -298,15 +308,267 @@ function measureFixture(
     if (betterKnife) {
       best = candidate;
       bestNotch = { knife: true, knifeRatio: notch.ratio };
+      bestThreshold = threshold;
       continue;
     }
-    if (!bestNotch.knife && (!best || candidate.threadiness > best.threadiness)) best = candidate;
+    if (!bestNotch.knife && (!best || candidate.threadiness > best.threadiness)) {
+      best = candidate;
+      bestThreshold = threshold;
+    }
   }
-  if (!best) return top ? { widths: top.widths, grooves: top.counts, saturated: false, ...plain } : null;
-  return { widths: best.widths, grooves: best.counts, saturated: true, ...bestNotch };
+  if (!best) {
+    return top
+      ? { widths: top.widths, grooves: top.counts, saturated: false, ...plain, band: top.band, threshold: otsuThreshold }
+      : null;
+  }
+  return {
+    widths: best.widths,
+    grooves: best.counts,
+    saturated: true,
+    ...bestNotch,
+    band: best.band,
+    threshold: bestThreshold,
+  };
+}
+
+/**
+ * Pitch class from pitch ÷ fixture width. Length and magnification cancel.
+ * Fine is a short pitch (Brånemark-like). Coarse is a long pitch relative to width.
+ */
+export function threadClass(period: number, diameter: number): "fine" | "standard" | "coarse" | "knife" {
+  const relative = period / Math.max(diameter, 1);
+  if (relative < 0.2) return "fine";
+  if (relative > 0.4) return "knife";
+  if (relative > 0.3) return "coarse";
+  return "standard";
+}
+
+/** Clockwise rotation of the raster, in degrees. Empty corners keep the border tone. */
+export function rotateRaster(raster: Raster, degrees: number): Raster {
+  if (Math.abs(degrees) < 0.01) return raster;
+  const theta = (degrees * Math.PI) / 180;
+  const cos = Math.cos(theta);
+  const sin = Math.sin(theta);
+  const { width, height, data } = raster;
+  const cx = (width - 1) / 2;
+  const cy = (height - 1) / 2;
+  const nextWidth = Math.max(1, Math.ceil(Math.abs(width * cos) + Math.abs(height * sin)));
+  const nextHeight = Math.max(1, Math.ceil(Math.abs(width * sin) + Math.abs(height * cos)));
+  const out = new Uint8ClampedArray(nextWidth * nextHeight * 4);
+  const ocx = (nextWidth - 1) / 2;
+  const ocy = (nextHeight - 1) / 2;
+  const fill = borderTone(data, width, height);
+  for (let y = 0; y < nextHeight; y++) {
+    for (let x = 0; x < nextWidth; x++) {
+      const dx = x - ocx;
+      const dy = y - ocy;
+      const sx = dx * cos + dy * sin + cx;
+      const sy = -dx * sin + dy * cos + cy;
+      const pixel = (y * nextWidth + x) * 4;
+      const sample = bilinear(data, width, height, sx, sy, fill);
+      out[pixel] = sample[0];
+      out[pixel + 1] = sample[1];
+      out[pixel + 2] = sample[2];
+      out[pixel + 3] = 255;
+    }
+  }
+  return { width: nextWidth, height: nextHeight, data: out };
+}
+
+function borderTone(data: Uint8ClampedArray, width: number, height: number): [number, number, number] {
+  const corners = [0, width - 1, (height - 1) * width, (height - 1) * width + (width - 1)];
+  let r = 0;
+  let g = 0;
+  let b = 0;
+  for (const index of corners) {
+    const pixel = index * 4;
+    r += data[pixel] ?? 0;
+    g += data[pixel + 1] ?? 0;
+    b += data[pixel + 2] ?? 0;
+  }
+  return [r / corners.length, g / corners.length, b / corners.length];
+}
+
+function bilinear(
+  data: Uint8ClampedArray,
+  width: number,
+  height: number,
+  x: number,
+  y: number,
+  fill: [number, number, number],
+): [number, number, number] {
+  if (x < 0 || y < 0 || x > width - 1 || y > height - 1) return fill;
+  const x0 = Math.floor(x);
+  const y0 = Math.floor(y);
+  const x1 = Math.min(width - 1, x0 + 1);
+  const y1 = Math.min(height - 1, y0 + 1);
+  const tx = x - x0;
+  const ty = y - y0;
+  const sample = (px: number, py: number, channel: number) => data[(py * width + px) * 4 + channel] ?? 0;
+  const mix = (channel: number) =>
+    sample(x0, y0, channel) * (1 - tx) * (1 - ty) +
+    sample(x1, y0, channel) * tx * (1 - ty) +
+    sample(x0, y1, channel) * (1 - tx) * ty +
+    sample(x1, y1, channel) * tx * ty;
+  return [mix(0), mix(1), mix(2)];
+}
+
+/**
+ * Degrees clockwise that the long axis leans away from vertical.
+ * Null when the bright object is not clearly longer than it is wide.
+ */
+export function longAxisTilt(lum: Float32Array, width: number, height: number, threshold: number): number | null {
+  let count = 0;
+  let sumX = 0;
+  let sumY = 0;
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      if (lum[y * width + x] < threshold) continue;
+      count++;
+      sumX += x;
+      sumY += y;
+    }
+  }
+  if (count < 40) return null;
+  const cx = sumX / count;
+  const cy = sumY / count;
+  let mu20 = 0;
+  let mu02 = 0;
+  let mu11 = 0;
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      if (lum[y * width + x] < threshold) continue;
+      const dx = x - cx;
+      const dy = y - cy;
+      mu20 += dx * dx;
+      mu02 += dy * dy;
+      mu11 += dx * dy;
+    }
+  }
+  mu20 /= count;
+  mu02 /= count;
+  mu11 /= count;
+  const diff = mu20 - mu02;
+  const disc = Math.hypot(diff, 2 * mu11);
+  const major = (mu20 + mu02 + disc) / 2;
+  const minor = (mu20 + mu02 - disc) / 2;
+  const axis = 0.5 * Math.atan2(2 * mu11, diff);
+  let vx = Math.cos(axis);
+  let vy = Math.sin(axis);
+  if (vy < 0) {
+    vx = -vx;
+    vy = -vy;
+  }
+  const degrees = (-Math.atan2(vx, vy) * 180) / Math.PI;
+  if (minor <= 0.5 || major / minor < 2.2) return null;
+  return degrees;
+}
+
+/**
+ * Lean of the fixture midline, in degrees clockwise from vertical.
+ * The search is wider than the vertical band so a tilted implant is not clipped into looking upright.
+ */
+function flankTilt(
+  lum: Float32Array,
+  width: number,
+  height: number,
+  threshold: number,
+  band: { start: number; end: number },
+): number | null {
+  const bandWidth = band.end - band.start + 1;
+  const pad = Math.max(bandWidth, Math.round(height * 0.22));
+  const left = Math.max(0, band.start - pad);
+  const right = Math.min(width - 1, band.end + pad);
+  const mid = (band.start + band.end) / 2;
+  const rows: { x: number; y: number }[] = [];
+  for (let y = 0; y < height; y++) {
+    let minX = right;
+    let maxX = left;
+    let count = 0;
+    let sum = 0;
+    for (let x = left; x <= right; x++) {
+      if (lum[y * width + x] < threshold) continue;
+      count++;
+      sum += x;
+      if (x < minX) minX = x;
+      if (x > maxX) maxX = x;
+    }
+    const span = count > 0 ? maxX - minX + 1 : 0;
+    const center = count > 0 ? sum / count : 0;
+    if (count < 4 || span < 3 || span > bandWidth * 2.6) continue;
+    if (Math.abs(center - mid) > pad) continue;
+    rows.push({ x: center, y });
+  }
+  if (rows.length < Math.max(24, height * 0.22)) return null;
+  const fit = (points: { x: number; y: number }[]) => {
+    let n = 0;
+    let sumY = 0;
+    let sumX = 0;
+    let sumYY = 0;
+    let sumXY = 0;
+    for (const point of points) {
+      n++;
+      sumY += point.y;
+      sumX += point.x;
+      sumYY += point.y * point.y;
+      sumXY += point.x * point.y;
+    }
+    const denom = n * sumYY - sumY * sumY;
+    if (n < 24 || Math.abs(denom) < 1) return null;
+    const slope = (n * sumXY - sumX * sumY) / denom;
+    const intercept = (sumX - slope * sumY) / n;
+    return { slope, intercept };
+  };
+  const first = fit(rows);
+  if (!first) return null;
+  const kept = rows.filter((point) => Math.abs(point.x - (first.intercept + first.slope * point.y)) <= bandWidth * 0.85);
+  const second = fit(kept) ?? first;
+  // Positive slope means x grows downward. That is a counterclockwise lean, opposite the PCA sign.
+  const degrees = (-Math.atan(second.slope) * 180) / Math.PI;
+  if (!Number.isFinite(degrees)) return null;
+  return degrees;
+}
+
+function orientToLongAxis(raster: Raster, polarity: Polarity): { raster: Raster; degrees: number } {
+  const { width, height, data } = raster;
+  const lum = new Float32Array(width * height);
+  const hist = new Array<number>(256).fill(0);
+  for (let i = 0; i < width * height; i++) {
+    let value = luminance(data, i * 4);
+    if (polarity === "dark") value = 255 - value;
+    lum[i] = value;
+    hist[Math.max(0, Math.min(255, Math.round(value)))]++;
+  }
+  const otsuThreshold = otsu(hist, width * height) + 1;
+  const fixture = measureFixture(lum, width, height, hist, otsuThreshold);
+  if (!fixture) return { raster, degrees: 0 };
+  const masked = new Float32Array(width * height);
+  for (let y = 0; y < height; y++) {
+    for (let x = fixture.band.start; x <= fixture.band.end; x++) {
+      const index = y * width + x;
+      if (lum[index] >= fixture.threshold) masked[index] = lum[index];
+    }
+  }
+  const flank = flankTilt(lum, width, height, fixture.threshold, fixture.band);
+  const pca = longAxisTilt(masked, width, height, fixture.threshold);
+  const tilt = flank ?? pca;
+  if (tilt == null || Math.abs(tilt) < 4 || Math.abs(tilt) > 35) return { raster, degrees: 0 };
+  return { raster: rotateRaster(raster, -tilt), degrees: tilt };
 }
 
 export function analyzeRaster(raster: Raster, polarity: Polarity = "bright"): VisionReport {
+  const oriented = orientToLongAxis(raster, polarity);
+  const report = analyzeUpright(oriented.raster, polarity);
+  if (oriented.degrees !== 0) {
+    const lean = Math.abs(Math.round(oriented.degrees));
+    report.notes.unshift(
+      `The fixture leaned about ${lean}° off vertical. Width, pitch, neck, and apex were measured after rotating the crop onto its long axis.`,
+    );
+  }
+  return report;
+}
+
+function analyzeUpright(raster: Raster, polarity: Polarity = "bright"): VisionReport {
   const { width, height, data } = raster;
   const hist = new Array<number>(256).fill(0);
   const lum = new Float32Array(width * height);
@@ -363,7 +625,7 @@ export function analyzeRaster(raster: Raster, polarity: Polarity = "bright"): Vi
   const apexLate = span.slice(Math.floor(n * 0.9)).filter((value) => value > 0);
   const cues: VisionCue[] = [];
   const notes: string[] = [
-    "Image cues are measurements of this crop. They enter the same evidence list as a soft cue until you confirm or replace them.",
+    "Image cues are measurements of this crop. They stay soft evidence, including after you accept them. A cue counts as confirmed only when you set it yourself.",
   ];
 
   if (collarSlice.length && bodySlice.length) {
@@ -448,19 +710,18 @@ export function analyzeRaster(raster: Raster, polarity: Polarity = "bright"): Vi
       note: "The core between the blades is narrow and the notches repeat. That reads as deep knife threads, including when a neighboring tooth is in the frame.",
     });
   } else if (thread) {
-    const relative = thread.period / Math.max(n, 1);
-    let value = "standard";
-    if (relative < 0.034) value = "fine";
-    else if (relative > 0.055 && thread.amplitude > midMed * 0.12) value = "knife";
-    else if (relative > 0.048) value = "coarse";
+    const diameter = median(bodySlice.filter((value) => value > 2));
+    const relative = thread.period / Math.max(diameter, 1);
+    let value: "fine" | "standard" | "coarse" | "knife" | "progressive" = threadClass(thread.period, diameter);
+    if (value === "knife" && thread.amplitude <= midMed * 0.12) value = "coarse";
     const topAmp = stddev(bodySlice.slice(0, Math.floor(bodySlice.length / 2)));
     const botAmp = stddev(bodySlice.slice(Math.floor(bodySlice.length / 2)));
-    if (value !== "knife" && botAmp > topAmp * 1.45 && relative > 0.04) value = "progressive";
+    if (value !== "knife" && botAmp > topAmp * 1.45 && relative > 0.22) value = "progressive";
     cues.push({
       feature: "thread",
       value,
       strength: thread.amplitude > 1.6 ? "moderate" : "low",
-      note: "Thread pitch is estimated from the edge, so angulation can fake a coarse or fine thread.",
+      note: "Thread class uses pitch divided by the fixture width, so a longer implant does not look finer.",
     });
   } else {
     notes.push("Thread pitch was not readable. Leave thread as not sure unless you can count it.");
