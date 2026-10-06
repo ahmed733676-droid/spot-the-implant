@@ -59,6 +59,13 @@ describe("phone menu focus return", () => {
     return parent;
   }
 
+  it("paints the toggle ring only for focus-visible", () => {
+    const button = toggle();
+    expect(button.className).toContain("focus-visible:outline-2");
+    expect(button.className).toContain("focus-visible:outline-brass");
+    expect(button.className).not.toMatch(/(?:^|\s)focus:outline/);
+  });
+
   it("returns focus to the toggle after an empty-space click blurs the row", () => {
     openMenu();
     const button = toggle();

@@ -178,7 +178,7 @@ export function SiteHeader() {
             <button
               ref={toggleRef}
               type="button"
-              className="relative grid size-11 place-items-center border border-foreground/20 focus:outline-2 focus:outline-solid focus:outline-offset-2 focus:outline-brass md:hidden"
+              className="relative grid size-11 place-items-center border border-foreground/20 focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-offset-2 focus-visible:outline-brass md:hidden"
               aria-expanded={open}
               aria-controls={menuId}
               aria-label={open ? "Close menu" : "Open menu"}
