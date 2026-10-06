@@ -38,12 +38,18 @@ export function SiteHeader() {
   const headerRef = useRef<HTMLElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const toggleRef = useRef<HTMLButtonElement>(null);
+  // pointerdown blurs a focused row before the click that closes the menu.
+  const focusWasInsideRef = useRef(false);
   const open = state === "open";
   const present = state !== "closed";
 
   const closeMenu = useCallback(() => {
     setState((current) => (current === "open" ? "closing" : current));
-    if (panelRef.current?.contains(document.activeElement)) toggleRef.current?.focus();
+    const active = document.activeElement;
+    const inside = Boolean(panelRef.current?.contains(active));
+    const onBody = !active || active === document.body || active === document.documentElement;
+    if (inside || onBody || focusWasInsideRef.current) toggleRef.current?.focus();
+    focusWasInsideRef.current = false;
   }, []);
 
   const openMenu = useCallback(() => {
@@ -129,6 +135,15 @@ export function SiteHeader() {
     return () => window.clearTimeout(handle);
   }, [state]);
 
+  useEffect(() => {
+    if (!present) return;
+    const onPointerDown = () => {
+      focusWasInsideRef.current = Boolean(panelRef.current?.contains(document.activeElement));
+    };
+    document.addEventListener("pointerdown", onPointerDown, true);
+    return () => document.removeEventListener("pointerdown", onPointerDown, true);
+  }, [present]);
+
   return (
     <header ref={headerRef} className="sticky top-0 z-[70]">
       <div className={`relative z-[80] border-b border-foreground/15 ${present ? "bg-background" : "bg-background/95"}`}>
@@ -196,7 +211,7 @@ export function SiteHeader() {
           }}
         >
           <nav
-            className="mx-auto flex min-h-full w-full max-w-6xl flex-col px-5 pt-20 pb-8"
+            className="mx-auto flex min-h-full w-full max-w-6xl flex-col px-5 pt-20 pb-15"
             aria-label="Mobile"
             onClick={(event) => {
               if (event.target === event.currentTarget) closeMenu();
