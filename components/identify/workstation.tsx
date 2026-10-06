@@ -31,6 +31,7 @@ import type { Raster } from "@/lib/silhouette";
 import { paintSchematic } from "@/lib/silhouette";
 import { getSystem, identityOf, SYSTEMS } from "@/lib/systems";
 import { emptyObservation, FEATURE_KEYS, type FeatureKey, type Observation } from "@/lib/types";
+import { matchShape } from "@/lib/twins/match";
 import { analyzeRaster, type Polarity, type VisionCue } from "@/lib/vision";
 
 type Stage = "upload" | "crop" | "cues" | "results";
@@ -95,6 +96,7 @@ export function Workstation() {
   }, [params]);
 
   const vision = useMemo(() => (raster ? analyzeRaster(raster, polarity) : null), [raster, polarity]);
+  const shapeHits = useMemo(() => (raster ? matchShape(raster) : []), [raster]);
   const result = useMemo(
     () =>
       rankSystems(
@@ -103,8 +105,9 @@ export function Workstation() {
         2,
         vision?.cues ?? [],
         FEATURE_KEYS.filter((feature) => fromImage[feature]),
+        shapeHits,
       ),
-    [observation, vision, fromImage],
+    [observation, vision, fromImage, shapeHits],
   );
 
   async function takeFile(file: File) {
@@ -783,6 +786,9 @@ function ResultStage({
           </p>
         </section>
       ) : null}
+      {result.shapeAside ? (
+        <p className="mt-4 text-xs leading-relaxed text-muted-foreground">{result.shapeAside}</p>
+      ) : null}
       {result.clusterNote ? (
         <p className="mt-4 border-l-2 border-brass pl-4 text-sm leading-relaxed">{result.clusterNote}</p>
       ) : null}
@@ -890,6 +896,9 @@ function ResultStage({
                   </div>
                   <div>
                     <p className="text-sm leading-relaxed">{brand.why}</p>
+                    {brand.shapeNote ? (
+                      <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{brand.shapeNote}</p>
+                    ) : null}
                     {brand.whyNot.length > 0 ? (
                       <div className="mt-3">
                         <p className="font-mono text-[11px] text-brass">Why it may be wrong</p>
