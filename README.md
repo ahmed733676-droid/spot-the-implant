@@ -23,9 +23,9 @@ npm start
 
 ## What you can do
 
-- **Identify** — JPEG, PNG, WebP, or DICOM (uncompressed grayscale, or a single JPEG-compressed frame). Crop the fixture. Confirmed cues are hard evidence. On-device measurements of neck, taper, thread, and apex enter the same list as soft evidence until you confirm or replace them. The company comes first. The line is secondary.
+- **Identify** — JPEG, PNG, WebP, or DICOM (uncompressed grayscale, or a single JPEG-compressed frame). Crop the fixture. Cues you set yourself are hard evidence. On-device measurements of neck, taper, thread, and apex stay soft, including after you accept them, and are labelled as image evidence. The company comes first. The line is secondary. When the confirmed cues fit no system, the two closest names stay up and the screen says the fixture may be outside the library.
 - **Library** — 26 systems with schematic silhouettes, checklist values, look-alikes, and public sources. No clinical radiograph is presented as a product photo.
-- **Labels** — Mark a result correct, wrong, unsure, or flag it for a specialist. The label (cues and verdict only) stays in `localStorage`. Export it as JSON from the results step.
+- **Labels** — Mark a result correct, wrong, unsure, or flag it for a specialist. The label (cues and verdict only, never the radiograph) stays in `localStorage`, capped at 200 rows. Export it as JSON from the results step.
 
 ## Accuracy, stated plainly
 

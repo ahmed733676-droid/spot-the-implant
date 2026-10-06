@@ -18,7 +18,7 @@ const steps = [
   },
   {
     title: "Cues become evidence",
-    body: "What you confirm is hard evidence. An image measurement of neck, taper, thread, or apex stays in the same list as a soft cue until you confirm or replace it. A mild taper by itself does not name a company. A knife thread, a tulip, a convergent neck, tube-in-tube, or a subcrestal cone can move a family up the list.",
+    body: "What you set yourself is hard evidence. Accepting an image measurement keeps it soft and labelled, and it does not count toward the three cues that name a company. A mild taper by itself does not name a company. A knife thread, a tulip, a convergent neck, tube-in-tube, or a subcrestal cone can move a family up the list.",
   },
   {
     title: "Then a company, then a line",

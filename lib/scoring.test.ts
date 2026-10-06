@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { agreementPercent, canonicalObservation, CONFIDENCE_CAP, rankSystems } from "@/lib/scoring";
 import { identityOf, SYSTEMS } from "@/lib/systems";
-import { emptyObservation, type Observation } from "@/lib/types";
+import { emptyObservation, type FeatureKey, type Observation } from "@/lib/types";
 
 function observe(partial: Partial<Observation>): Observation {
   return { ...emptyObservation(), ...partial };
@@ -461,5 +461,45 @@ describe("rankSystems", () => {
       expect(percents[i]).toBeLessThanOrEqual(percents[i - 1]);
     }
     expect(result.literature.some((note) => /thread form|knife/i.test(note.text))).toBe(true);
+  });
+
+  it("keeps an accepted image cue soft and out of the company rule", () => {
+    const observation = observe({
+      collar: "bone-level",
+      body: "mild-taper",
+      thread: "knife",
+    });
+    const accepted: FeatureKey[] = ["collar", "body", "thread"];
+    const vision = [
+      { feature: "collar" as const, value: "bone-level", strength: "low" as const, note: "Image neck." },
+      { feature: "body" as const, value: "mild-taper", strength: "moderate" as const, note: "Image taper." },
+      { feature: "thread" as const, value: "knife", strength: "moderate" as const, note: "Image blades." },
+    ];
+    const result = rankSystems(observation, SYSTEMS, 2, vision, accepted);
+    expect(result.answered).toBe(0);
+    expect(result.brands[0]?.company).toBe("MegaGen");
+    expect(result.brands[0]?.companySettled).toBe(false);
+    expect(result.brands[0]?.systems[0]?.matches.some((match) => match.source === "accepted" && match.value === "knife")).toBe(
+      true,
+    );
+    expect(result.brands[0]?.why).toMatch(/image, accepted/);
+  });
+
+  it("says the fixture may be outside the library when confirmed cues fit nobody", () => {
+    const result = rankSystems(
+      observe({
+        collar: "tulip",
+        thread: "knife",
+        connection: "external-hex",
+      }),
+    );
+    expect(result.brands).toHaveLength(2);
+    expect(result.libraryUnsure?.reason).toMatch(/Not in library/);
+  });
+
+  it("does not call a clean tissue-level film unknown", () => {
+    const result = rankSystems(canonicalObservation(SYSTEMS.find((system) => system.id === "straumann-tl")!));
+    expect(result.libraryUnsure).toBeNull();
+    expect(result.brands[0]?.companySettled).toBe(true);
   });
 });

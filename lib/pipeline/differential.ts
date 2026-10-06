@@ -39,7 +39,13 @@ function whyText(scored: Scored): string {
     return "None of the marked cues fit this system. It is listed only so a near-miss stays visible.";
   }
   const cues = scored.matches
-    .map((match) => (match.source === "vision" ? `${match.phrase} (image)` : match.phrase))
+    .map((match) =>
+      match.source === "accepted"
+        ? `${match.phrase} (image, accepted)`
+        : match.source === "vision"
+          ? `${match.phrase} (image)`
+          : match.phrase,
+    )
     .join("; ");
   const extra = scored.signatureNotes.length ? ` ${scored.signatureNotes.join(" ")}` : "";
   return `Fits ${cues}.${extra}`;
@@ -143,6 +149,7 @@ export function differentiate(input: {
       evidence: "none",
       flat: false,
       clusterNote: "Mark at least one radiographic cue. With nothing marked, every system is equally possible.",
+      libraryUnsure: null,
     };
   }
 
@@ -212,9 +219,11 @@ export function differentiate(input: {
     });
 
   const distinctiveConfirmed = hasDistinctive(input.cues, "confirmed");
-  const distinctiveVision = hasDistinctive(input.cues, "vision");
-  const visionCarriesTheSplit = distinctiveVision && !distinctiveConfirmed;
-  const anyDistinctive = distinctiveConfirmed || distinctiveVision;
+  const distinctiveImage = input.cues.some(
+    (cue) => cue.source !== "confirmed" && DISTINCTIVE.has(cue.value),
+  );
+  const visionCarriesTheSplit = distinctiveImage && !distinctiveConfirmed;
+  const anyDistinctive = distinctiveConfirmed || distinctiveImage;
   const tiedGroups = ordered.filter((group) => leader.rankScore - group[0].rankScore < 0.02);
   const flat = !anyDistinctive && tiedGroups.length >= 3;
 
@@ -362,6 +371,14 @@ export function differentiate(input: {
 
   const brands: RankedBrand[] = draft.slice(0, Math.max(1, limit)).map((brand) => withoutScore(brand));
   const ranked: RankedSystem[] = presented.slice(0, limit).map((row) => withoutScore(row));
+  const libraryUnsure = unsureLibrary({
+    cues: input.cues,
+    scored,
+    leader,
+    second,
+    flat,
+    affinity: leader.affinity,
+  });
 
   return {
     brands,
@@ -371,7 +388,76 @@ export function differentiate(input: {
     evidence,
     flat,
     clusterNote,
+    libraryUnsure,
   };
+}
+
+function confirmedMisses(entry: Scored, cues: readonly EvidenceCue[]): number {
+  return cues.filter(
+    (cue) =>
+      cue.source === "confirmed" &&
+      entry.contradictions.some((note) => note.feature === cue.feature && note.value === cue.value),
+  ).length;
+}
+
+/**
+ * Open set. The top two stay visible. This only says the library may not contain the fixture.
+ */
+function unsureLibrary(input: {
+  cues: readonly EvidenceCue[];
+  scored: Scored[];
+  leader: Scored;
+  second: Scored | null;
+  flat: boolean;
+  affinity: number;
+}): { reason: string } | null {
+  const confirmed = input.cues.filter((cue) => cue.source === "confirmed");
+  if (confirmed.length >= 2 && input.second) {
+    const shared = confirmed.filter(
+      (cue) => confirmedMisses(input.leader, [cue]) === 1 && confirmedMisses(input.second as Scored, [cue]) === 1,
+    );
+    if (shared.length >= 2) {
+      return {
+        reason:
+          "Not in library / unsure. The two closest names both contradict cues you confirmed, so this fixture may sit outside the 26 systems.",
+      };
+    }
+  }
+  if (confirmed.length >= 3 && input.scored.length > 0) {
+    const fewestMisses = Math.min(...input.scored.map((entry) => confirmedMisses(entry, confirmed)));
+    if (fewestMisses >= 2) {
+      return {
+        reason:
+          "Not in library / unsure. Every system in this library contradicts at least two cues you confirmed, so the fixture may sit outside the 26 systems.",
+      };
+    }
+  }
+  if (confirmed.length >= 1 && confirmedMisses(input.leader, confirmed) === confirmed.length) {
+    return {
+      reason:
+        "Not in library / unsure. None of the cues you confirmed fit the closest system in this library.",
+    };
+  }
+  if (confirmed.length >= 2 && input.affinity < 0.4 && confirmedMisses(input.leader, confirmed) >= 1) {
+    return {
+      reason:
+        "Not in library / unsure. The best agreement with this library is weak, so do not treat the two names as a match.",
+    };
+  }
+  if (
+    !input.flat &&
+    input.second &&
+    input.leader.rankScore - input.second.rankScore < 0.05 &&
+    !sharesTwin([input.leader], [input.second]) &&
+    input.leader.contradictions.some((note) => DISTINCTIVE.has(note.value)) &&
+    input.second.contradictions.some((note) => DISTINCTIVE.has(note.value))
+  ) {
+    return {
+      reason:
+        "Not in library / unsure. The top two names conflict on a distinctive cue and neither pulls away. The fixture may be outside this library.",
+    };
+  }
+  return null;
 }
 
 export function scoreCatalog(systems: readonly ImplantSystem[], cues: readonly EvidenceCue[]): Scored[] {
