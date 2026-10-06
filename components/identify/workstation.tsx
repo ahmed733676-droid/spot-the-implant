@@ -96,8 +96,15 @@ export function Workstation() {
 
   const vision = useMemo(() => (raster ? analyzeRaster(raster, polarity) : null), [raster, polarity]);
   const result = useMemo(
-    () => rankSystems(observation, SYSTEMS, 2, vision?.cues ?? []),
-    [observation, vision],
+    () =>
+      rankSystems(
+        observation,
+        SYSTEMS,
+        2,
+        vision?.cues ?? [],
+        FEATURE_KEYS.filter((feature) => fromImage[feature]),
+      ),
+    [observation, vision, fromImage],
   );
 
   async function takeFile(file: File) {
@@ -650,7 +657,7 @@ function CueStage({
           </div>
         </fieldset>
         <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
-          Image measurement of collar, taper, thread, and apex already counts as soft evidence. Accept a cue to confirm it, or pick another value to replace it. The junction line and the connection are never guessed.
+          Image measurements of collar, taper, thread, and apex already count as soft evidence. Using an image cue keeps that label. It does not become a cue you confirmed, and it does not count toward naming a company. Pick a value yourself when you can see it. The junction line and the connection are never guessed.
         </p>
         <div className="mt-5 space-y-5">
           {FEATURE_KEYS.map((feature) => {
@@ -664,8 +671,11 @@ function CueStage({
                     onClick={() => onApply(suggestion)}
                     className="mt-2 block text-left text-xs text-brass hover:underline"
                   >
-                    Image cue: {CHOICES[feature].find((choice) => choice.value === suggestion.value)?.label} ·{" "}
-                    {suggestion.strength} · {suggestion.note}
+                    {fromImage[feature]
+                      ? "Image, accepted — still soft: "
+                      : "Use this image cue (stays soft): "}
+                    {CHOICES[feature].find((choice) => choice.value === suggestion.value)?.label} · {suggestion.strength} ·{" "}
+                    {suggestion.note}
                   </button>
                 ) : null}
                 <div className="mt-2 flex flex-wrap gap-2">
@@ -763,6 +773,15 @@ function ResultStage({
         <p className="mt-3 text-sm text-brass">
           These cues came from a library schematic. They are not a reading of a patient film.
         </p>
+      ) : null}
+      {result.libraryUnsure ? (
+        <section className="mt-4 border border-foreground/25 px-4 py-4">
+          <p className="font-mono text-[11px] text-brass">Not in library / unsure</p>
+          <p className="mt-2 text-sm leading-relaxed">{result.libraryUnsure.reason}</p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            The two names below are the closest reads in this library. They are not a diagnosis.
+          </p>
+        </section>
       ) : null}
       {result.clusterNote ? (
         <p className="mt-4 border-l-2 border-brass pl-4 text-sm leading-relaxed">{result.clusterNote}</p>
@@ -885,7 +904,7 @@ function ResultStage({
                       {lead.matches.map((match) => (
                         <li key={match.feature}>
                           {match.phrase}
-                          {match.source === "vision" ? " · image" : ""}
+                          {match.source === "accepted" ? " · image, accepted" : match.source === "vision" ? " · image" : ""}
                         </li>
                       ))}
                     </ul>
@@ -998,7 +1017,7 @@ function SystemPicker({
 }) {
   const [query, setQuery] = useState("");
   const filtered = SYSTEMS.filter((system) => {
-    const haystack = `${system.brand} ${system.system} ${system.aliases.join(" ")}`.toLowerCase();
+    const haystack = `${system.brand} ${system.system} ${system.aliases.join(" ")}` .toLowerCase();
     return haystack.includes(query.trim().toLowerCase());
   });
   return (
