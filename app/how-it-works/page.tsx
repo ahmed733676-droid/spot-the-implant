@@ -44,7 +44,7 @@ const steps = [
 
 export default function HowItWorksPage() {
   return (
-    <article className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
+    <article className="mx-auto max-w-6xl px-4 pt-14 pb-18 sm:px-6 lg:pt-24 lg:pb-28">
       <div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-end">
         <div>
           <p className="kicker">Pipeline</p>

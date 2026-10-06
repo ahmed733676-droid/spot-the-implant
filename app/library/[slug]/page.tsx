@@ -34,7 +34,7 @@ export default async function SystemPage({ params }: { params: Promise<{ slug: s
   const twins = system.twins.map((id) => getSystem(id)).filter((item) => item != null);
 
   return (
-    <article className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
+    <article className="mx-auto max-w-6xl px-4 pt-14 pb-18 sm:px-6 lg:pt-24 lg:pb-28">
       <p className="kicker">{identityOf(system).company}</p>
       <div className="mt-3 grid gap-8 lg:grid-cols-[280px_1fr] lg:items-start">
         <div>

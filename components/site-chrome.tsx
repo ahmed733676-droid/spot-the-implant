@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState, type CSSProperties } from "react";
 import { buttonVariants } from "@/components/ui/button";
+import { buildOutline, outlinePath } from "@/lib/silhouette";
+import type { SchematicProfile } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 const links = [
@@ -13,36 +15,44 @@ const links = [
   { href: "/about", index: "04", label: "Limits", detail: "Decision support. Not a device." },
 ] as const;
 
+// = SYSTEMS["straumann-tl"].schematic (lib/systems.ts)
+const MENU_FIXTURE: SchematicProfile = {
+  collar: "tulip",
+  body: "parallel",
+  thread: "standard",
+  apex: "round",
+  connection: "octagon",
+  platformSwitch: false,
+};
+const MENU_FIXTURE_D = outlinePath(buildOutline(MENU_FIXTURE).points);
+
 function isCurrent(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
 export function SiteHeader() {
   const pathname = usePathname();
-  const [open, setOpen] = useState(false);
-  const [present, setPresent] = useState(false);
-  const [visible, setVisible] = useState(false);
+  const [state, setState] = useState<"closed" | "open" | "closing">("closed");
   const [menuPath, setMenuPath] = useState(pathname);
   const menuId = useId();
   const headerRef = useRef<HTMLElement>(null);
-  const closeRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const toggleRef = useRef<HTMLButtonElement>(null);
+  const open = state === "open";
+  const present = state !== "closed";
+
+  const closeMenu = useCallback(() => {
+    setState((current) => (current === "open" ? "closing" : current));
+    if (panelRef.current?.contains(document.activeElement)) toggleRef.current?.focus();
+  }, []);
+
+  const openMenu = useCallback(() => {
+    setState("open");
+  }, []);
 
   if (pathname !== menuPath) {
     setMenuPath(pathname);
-    setOpen(false);
-    setVisible(false);
-  }
-
-  function openMenu() {
-    setPresent(true);
-    setOpen(true);
-    window.requestAnimationFrame(() => setVisible(true));
-  }
-
-  function closeMenu() {
-    setOpen(false);
-    setVisible(false);
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) setPresent(false);
+    setState((current) => (current === "open" ? "closing" : current));
   }
 
   useEffect(() => {
@@ -52,18 +62,35 @@ export function SiteHeader() {
     };
     media.addEventListener("change", onChange);
     return () => media.removeEventListener("change", onChange);
-  }, []);
+  }, [closeMenu]);
 
   useEffect(() => {
     if (!present) return;
-    const header = headerRef.current;
     const scrollY = window.scrollY;
-    const previous = document.body.style.cssText;
+    const previousBody = document.body.style.cssText;
+    const previousHtmlOverflow = document.documentElement.style.overflow;
+    const content = document.getElementById("content");
+    const footer = document.getElementById("site-footer");
     document.body.style.position = "fixed";
     document.body.style.top = `-${scrollY}px`;
     document.body.style.left = "0";
     document.body.style.right = "0";
     document.body.style.width = "100%";
+    document.documentElement.style.overflow = "hidden";
+    if (content) content.inert = true;
+    if (footer) footer.inert = true;
+    return () => {
+      document.body.style.cssText = previousBody;
+      document.documentElement.style.overflow = previousHtmlOverflow;
+      if (content) content.inert = false;
+      if (footer) footer.inert = false;
+      window.scrollTo(0, scrollY);
+    };
+  }, [present]);
+
+  useEffect(() => {
+    if (!open) return;
+    const header = headerRef.current;
 
     function focusable() {
       if (!header) return [];
@@ -75,10 +102,10 @@ export function SiteHeader() {
     function onKey(event: KeyboardEvent) {
       if (event.key === "Escape") {
         closeMenu();
-        closeRef.current?.focus();
+        toggleRef.current?.focus();
         return;
       }
-      if (event.key !== "Tab" || !open) return;
+      if (event.key !== "Tab") return;
       const items = focusable();
       if (items.length === 0) return;
       const first = items[0];
@@ -93,75 +120,79 @@ export function SiteHeader() {
     }
 
     document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("keydown", onKey);
-      document.body.style.cssText = previous;
-      window.scrollTo(0, scrollY);
-    };
-  }, [present, open]);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open, closeMenu]);
+
+  useEffect(() => {
+    if (state !== "closing") return;
+    const handle = window.setTimeout(() => setState("closed"), 400);
+    return () => window.clearTimeout(handle);
+  }, [state]);
 
   return (
     <header ref={headerRef} className="sticky top-0 z-[70]">
-      <div className={`relative z-[80] border-b border-foreground/15 ${open || present ? "bg-background" : "bg-background/95"}`}>
-      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
-        <Link href="/" className="flex min-w-0 items-baseline gap-3">
-          <span className="font-mono text-[11px] text-brass">PA</span>
-          <span className="font-heading text-[1.35rem] leading-none tracking-tight text-foreground">
-            Spot the Implant
-          </span>
-        </Link>
-        <nav className="hidden items-center gap-5 text-sm md:flex" aria-label="Primary">
-          {links.map((link) => {
-            const current = isCurrent(pathname, link.href);
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                aria-current={current ? "page" : undefined}
-                className={current ? "text-brass underline decoration-brass underline-offset-4" : "text-foreground/80 hover:text-brass"}
-              >
-                {link.label}
-              </Link>
-            );
-          })}
-        </nav>
-        <div className="flex items-center gap-2">
-          <button
-            ref={closeRef}
-            type="button"
-            className="relative grid size-11 place-items-center border border-foreground/20 md:hidden"
-            aria-expanded={open}
-            aria-controls={menuId}
-            aria-label={open ? "Close menu" : "Open menu"}
-            onClick={() => (open ? closeMenu() : openMenu())}
-          >
-            <span
-              className={`absolute h-px w-4 bg-foreground transition-transform duration-200 motion-reduce:transition-none ${open ? "rotate-45" : "-translate-y-1.5"}`}
-            />
-            <span
-              className={`absolute h-px w-4 bg-foreground transition-opacity duration-200 motion-reduce:transition-none ${open ? "opacity-0" : "opacity-100"}`}
-            />
-            <span
-              className={`absolute h-px w-4 bg-foreground transition-transform duration-200 motion-reduce:transition-none ${open ? "-rotate-45" : "translate-y-1.5"}`}
-            />
-          </button>
-          <Link href="/identify" className={cn(buttonVariants(), "hidden h-10 px-3.5 md:inline-flex")}>
-            Read a film
+      <div className={`relative z-[80] border-b border-foreground/15 ${present ? "bg-background" : "bg-background/95"}`}>
+        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
+          <Link href="/" className="flex min-w-0 items-baseline gap-3">
+            <span className="font-mono text-[11px] text-brass">PA</span>
+            <span className="font-heading text-[1.35rem] leading-none tracking-tight text-foreground">
+              Spot the Implant
+            </span>
           </Link>
+          <nav className="hidden items-center gap-5 text-sm md:flex" aria-label="Primary">
+            {links.map((link) => {
+              const current = isCurrent(pathname, link.href);
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  aria-current={current ? "page" : undefined}
+                  className={cn(
+                    "transition-colors duration-150",
+                    current
+                      ? "text-brass underline decoration-brass underline-offset-4"
+                      : "text-foreground/80 hover:text-brass",
+                  )}
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
+          </nav>
+          <div className="flex items-center gap-2">
+            <button
+              ref={toggleRef}
+              type="button"
+              className="relative grid size-11 place-items-center border border-foreground/20 md:hidden"
+              aria-expanded={open}
+              aria-controls={menuId}
+              aria-label={open ? "Close menu" : "Open menu"}
+              onClick={() => (open ? closeMenu() : openMenu())}
+            >
+              <span
+                className={`absolute h-px w-4 bg-foreground transition-transform duration-200 ease-out motion-reduce:transition-none ${open ? "rotate-45" : "-translate-y-1.5"}`}
+              />
+              <span
+                className={`absolute h-px w-4 bg-foreground transition-opacity duration-200 ease-out motion-reduce:transition-none ${open ? "opacity-0" : "opacity-100"}`}
+              />
+              <span
+                className={`absolute h-px w-4 bg-foreground transition-transform duration-200 ease-out motion-reduce:transition-none ${open ? "-rotate-45" : "translate-y-1.5"}`}
+              />
+            </button>
+            <Link href="/identify" className={cn(buttonVariants(), "hidden h-10 px-3.5 md:inline-flex")}>
+              Read a film
+            </Link>
+          </div>
         </div>
-      </div>
       </div>
       {present ? (
         <div
+          ref={panelRef}
           id={menuId}
-          role="dialog"
-          aria-modal="true"
-          aria-label="Menu"
-          className={`paper-rules fixed inset-0 z-[60] overflow-y-auto overscroll-none transition-opacity duration-200 motion-reduce:transition-none ${
-            visible ? "opacity-100" : "pointer-events-none opacity-0"
-          }`}
-          onTransitionEnd={() => {
-            if (!open) setPresent(false);
+          data-state={state}
+          className="menu-panel paper-rules fixed inset-0 z-[60] overflow-y-auto overscroll-none"
+          onAnimationEnd={(event) => {
+            if (event.target === event.currentTarget && state === "closing") setState("closed");
           }}
         >
           <nav
@@ -172,24 +203,28 @@ export function SiteHeader() {
             }}
           >
             <p className="kicker">What&apos;s my implant?</p>
-            <ul className="mt-6 border-t border-foreground/15">
-              {links.map((link) => {
+            <ul className="menu-list mt-6">
+              {links.map((link, index) => {
                 const current = isCurrent(pathname, link.href);
                 return (
-                  <li key={link.href} className="border-b border-foreground/15">
+                  <li key={link.href} className="menu-row" style={{ "--i": index } as CSSProperties}>
                     <Link
                       href={link.href}
                       aria-current={current ? "page" : undefined}
-                      className="flex min-h-16 items-baseline gap-4 py-3"
+                      className="flex min-h-16 items-baseline gap-4 py-3 transition-opacity duration-150 active:opacity-60"
                       onClick={closeMenu}
                     >
-                      <span className={`w-8 shrink-0 font-mono text-xs ${current ? "text-brass" : "text-muted-foreground"}`}>
+                      <span
+                        className={cn(
+                          "flex w-8 shrink-0 items-center gap-1.5 font-mono text-xs",
+                          current ? "text-brass" : "text-muted-foreground",
+                        )}
+                      >
                         {link.index}
+                        {current ? <span aria-hidden="true" className="size-1.5 rounded-full bg-brass" /> : null}
                       </span>
                       <span>
-                        <span className={`block font-heading text-4xl leading-none ${current ? "text-brass" : "text-foreground"}`}>
-                          {link.label}
-                        </span>
+                        <span className="block font-heading text-4xl leading-none text-foreground">{link.label}</span>
                         <span className="mt-1 block text-sm text-muted-foreground">{link.detail}</span>
                       </span>
                     </Link>
@@ -197,15 +232,28 @@ export function SiteHeader() {
                 );
               })}
             </ul>
-            <div className="mt-auto pt-10">
-              <Link
-                href="/identify"
-                className={cn(buttonVariants(), "h-12 w-full text-base")}
-                onClick={closeMenu}
+            <div className="flex flex-1 flex-col items-center justify-center gap-4 py-8" onClick={closeMenu}>
+              <svg
+                className="menu-fixture h-36 w-auto text-foreground/45 [@media(max-height:700px)]:hidden"
+                viewBox="40 28 80 284"
+                aria-hidden="true"
+                focusable="false"
               >
+                <path
+                  d={MENU_FIXTURE_D}
+                  pathLength={1}
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                  strokeLinejoin="round"
+                />
+              </svg>
+              <p className="menu-note font-mono text-[11px] text-muted-foreground">Films stay in this browser.</p>
+            </div>
+            <div className="menu-cta pt-6">
+              <Link href="/identify" className={cn(buttonVariants(), "h-12 w-full text-base")} onClick={closeMenu}>
                 Identify an x-ray
               </Link>
-              <p className="mt-3 text-center text-xs text-muted-foreground">Films stay in this browser.</p>
             </div>
           </nav>
         </div>
@@ -216,7 +264,7 @@ export function SiteHeader() {
 
 export function SiteFooter() {
   return (
-    <footer className="border-t border-foreground/15">
+    <footer id="site-footer" className="border-t border-foreground/15">
       <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-8 sm:px-6 md:flex-row md:items-end md:justify-between">
         <div>
           <p className="font-heading text-2xl leading-none">Decision support. Not a device.</p>
@@ -225,13 +273,13 @@ export function SiteFooter() {
           </p>
         </div>
         <div className="flex flex-wrap gap-x-5 gap-y-2 font-mono text-xs text-foreground/80">
-          <Link href="/about" className="hover:text-brass">
+          <Link href="/about" className="transition-colors duration-150 hover:text-brass">
             Limits
           </Link>
-          <Link href="/how-it-works" className="hover:text-brass">
+          <Link href="/how-it-works" className="transition-colors duration-150 hover:text-brass">
             Pipeline
           </Link>
-          <Link href="/library" className="hover:text-brass">
+          <Link href="/library" className="transition-colors duration-150 hover:text-brass">
             Library
           </Link>
         </div>
