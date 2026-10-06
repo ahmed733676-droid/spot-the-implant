@@ -497,6 +497,50 @@ describe("rankSystems", () => {
     expect(result.libraryUnsure?.reason).toMatch(/Not in library/);
   });
 
+  it("lets a shape match explain a company without settling it, and does not outvote a tulip", () => {
+    const shape = [
+      {
+        systemId: "megagen-anyridge",
+        libraryId: "megagen-anyridge",
+        name: "MegaGen AnyRidge",
+        score: 0.8,
+        pose: { lengthMm: 10, diameterMm: 5, mdDeg: 15, blDeg: 0, spinDeg: 0 },
+        sentence: "Shape match 80 for MegaGen AnyRidge. Parametric approximation from published catalog dimensions.",
+      },
+      {
+        systemId: "straumann-bl",
+        libraryId: "straumann-bl",
+        name: "Straumann Bone Level",
+        score: 0.55,
+        pose: { lengthMm: 10, diameterMm: 4.1, mdDeg: 0, blDeg: 0, spinDeg: 0 },
+        sentence: "Shape match 55 for Straumann Bone Level.",
+      },
+    ];
+    const fromShape = rankSystems(observe({ body: "mild-taper" }), SYSTEMS, 2, [], [], shape);
+    expect(fromShape.brands[0]?.company).toBe("MegaGen");
+    expect(fromShape.brands[0]?.companySettled).toBe(false);
+    expect(fromShape.brands[0]?.shapeNote).toMatch(/Parametric approximation/);
+    const tulip = rankSystems(
+      observe({
+        collar: "tulip",
+        connection: "internal-octagon",
+        body: "parallel",
+        thread: "standard",
+        apex: "rounded",
+        platformSwitch: "no",
+        lead: "single",
+      }),
+      SYSTEMS,
+      2,
+      [],
+      [],
+      shape,
+    );
+    expect(tulip.brands[0]?.company).toBe("Straumann");
+    expect(tulip.brands[0]?.shapeNote).toBeNull();
+    expect(tulip.shapeAside).toMatch(/Parametric approximation/);
+  });
+
   it("does not call a clean tissue-level film unknown", () => {
     const result = rankSystems(canonicalObservation(SYSTEMS.find((system) => system.id === "straumann-tl")!));
     expect(result.libraryUnsure).toBeNull();
