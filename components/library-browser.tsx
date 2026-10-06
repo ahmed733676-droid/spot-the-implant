@@ -63,7 +63,7 @@ export function LibraryBrowser() {
   }, [query, brand, collar, connection, body]);
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
+    <div className="mx-auto max-w-6xl px-4 pt-14 pb-18 sm:px-6 lg:pt-24 lg:pb-28">
       <p className="kicker">Library</p>
       <div className="mt-3 flex flex-col justify-between gap-4 md:flex-row md:items-end">
         <h1 className="max-w-xl font-heading text-5xl leading-[0.92] tracking-tight sm:text-6xl">

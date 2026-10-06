@@ -53,6 +53,30 @@
   --radius-4xl: 2px;
 }
 
+@theme static {
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1); /* overrides TW's ease-out utility on purpose */
+  --ease-out-soft: cubic-bezier(0.25, 1, 0.5, 1); /* new utility: ease-out-soft */
+  --default-transition-timing-function: var(--ease-out);
+  --default-transition-duration: 150ms;
+}
+
+:root {
+  --dur-150: 150ms;
+  --dur-200: 200ms;
+  --dur-300: 300ms;
+  --dur-450: 450ms;
+  --dur-550: 550ms;
+  --dur-close: 260ms;
+  --dur-rule: 500ms;
+  --dur-draw: 700ms;
+  --menu-first: 120ms;
+  --menu-stagger: 55ms;
+  --menu-cta-delay: 585ms; /* last row start 285ms + 300ms */
+  --menu-draw-delay: 640ms;
+  --menu-note-delay: 740ms;
+  --hairline: color-mix(in oklab, var(--foreground) 15%, transparent); /* = border-foreground/15 */
+}
+
 :root {
   --background: #e6dccb;
   --foreground: #1c1814;
@@ -147,4 +171,67 @@
   font-size: 0.75rem;
   letter-spacing: 0.02em;
   color: var(--brass);
+}
+
+@keyframes menu-wipe {
+  from { clip-path: inset(0 0 100% 0); }
+  to { clip-path: inset(0 0 0 0); }
+}
+@keyframes menu-rise {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes menu-rule {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+@keyframes menu-draw {
+  from { stroke-dashoffset: 1; }
+  to { stroke-dashoffset: 0; }
+}
+@keyframes menu-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes menu-out {
+  from { opacity: 1; transform: none; }
+  to { opacity: 0; transform: translateY(-8px); }
+}
+
+.menu-panel[data-state="open"] { animation: menu-wipe var(--dur-550) var(--ease-out) backwards; }
+.menu-panel[data-state="closing"] { animation: menu-out var(--dur-close) var(--ease-out) both; pointer-events: none; }
+
+.menu-list { position: relative; }
+.menu-row { position: relative; --d: calc(var(--menu-first) + var(--i) * var(--menu-stagger)); }
+.menu-list::before,
+.menu-row::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px; /* left = inline-start (site is LTR) */
+  background: var(--hairline);
+  transform-origin: left center;
+}
+.menu-list::before { top: 0; }
+.menu-row::after { bottom: 0; }
+.menu-fixture path { stroke-dasharray: 1; stroke-dashoffset: 0; } /* needs pathLength="1" */
+
+.menu-panel[data-state="open"] .menu-row > a { animation: menu-rise var(--dur-450) var(--ease-out-soft) var(--d) backwards; }
+.menu-panel[data-state="open"] .menu-row::after { animation: menu-rule var(--dur-rule) var(--ease-out) var(--d) backwards; }
+.menu-panel[data-state="open"] .menu-list::before { animation: menu-rule var(--dur-rule) var(--ease-out) var(--menu-first) backwards; }
+.menu-panel[data-state="open"] .menu-cta { animation: menu-rise var(--dur-450) var(--ease-out-soft) var(--menu-cta-delay) backwards; }
+.menu-panel[data-state="open"] .menu-fixture path { animation: menu-draw var(--dur-draw) var(--ease-out-soft) var(--menu-draw-delay) backwards; }
+.menu-panel[data-state="open"] .menu-note { animation: menu-fade var(--dur-300) var(--ease-out) var(--menu-note-delay) backwards; }
+
+/* Open uses fill `backwards` (the end state equals the resting style), so `active:opacity-60` on rows still works after entry. Close keeps `both`. */
+@media (prefers-reduced-motion: reduce) {
+  .menu-panel[data-state="open"] { animation: menu-fade var(--dur-150) var(--ease-out) backwards; }
+  .menu-panel[data-state="closing"] { animation: menu-fade var(--dur-150) var(--ease-out) reverse both; }
+  .menu-panel .menu-row > a,
+  .menu-panel .menu-row::after,
+  .menu-panel .menu-list::before,
+  .menu-panel .menu-cta,
+  .menu-panel .menu-fixture path,
+  .menu-panel .menu-note { animation: none !important; }
 }

@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function AboutPage() {
   return (
-    <article className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
+    <article className="mx-auto max-w-6xl px-4 pt-14 pb-18 sm:px-6 lg:pt-24 lg:pb-28">
       <p className="kicker">Limits</p>
       <h1 className="mt-3 max-w-3xl font-heading text-5xl leading-[0.92] tracking-tight sm:text-6xl">
         A bench for the record. <span className="italic text-brass">Not a badge.</span>

@@ -50,10 +50,10 @@ export default function HomePage() {
 
   return (
     <div>
-      <section className="mx-auto grid max-w-6xl gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:items-end lg:py-16">
+      <section className="mx-auto grid max-w-6xl gap-10 px-4 pt-14 pb-18 sm:px-6 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:items-end lg:pt-24 lg:pb-28">
         <div>
           <p className="kicker">Periapical → company</p>
-          <h1 className="mt-4 max-w-xl font-heading text-[3.4rem] leading-[0.88] tracking-tight text-balance sm:text-7xl">
+          <h1 className="mt-4 max-w-xl font-heading text-[clamp(2.625rem,11.8vw,3rem)] leading-[0.92] tracking-[-0.02em] text-balance sm:text-7xl sm:leading-[0.88] sm:tracking-tight">
             Two names.
             <span className="mt-1 block italic text-brass">Then stop.</span>
           </h1>
@@ -118,7 +118,7 @@ export default function HomePage() {
         </dl>
       </section>
 
-      <section className="mx-auto grid max-w-6xl gap-10 px-4 py-14 sm:px-6 lg:grid-cols-[0.7fr_1.3fr] lg:items-start">
+      <section className="mx-auto grid max-w-6xl gap-10 px-4 py-18 sm:px-6 lg:grid-cols-[0.7fr_1.3fr] lg:items-start lg:py-28">
         <div>
           <p className="kicker">How it works</p>
           <h2 className="mt-3 font-heading text-4xl leading-[0.95] tracking-tight">
@@ -142,7 +142,7 @@ export default function HomePage() {
       </section>
 
       <section className="bg-film text-bone">
-        <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
+        <div className="mx-auto max-w-6xl px-4 py-18 sm:px-6 lg:py-28">
           <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
             <div>
               <p className="font-mono text-[11px] text-phosphor">Reference shapes</p>
@@ -155,7 +155,7 @@ export default function HomePage() {
           <ul className="mt-8 grid grid-cols-2 gap-px bg-phosphor/20 sm:grid-cols-3 lg:grid-cols-6">
             {strip.map((system) => (
               <li key={system.id} className="bg-film">
-                <Link href={`/library/${system.id}`} className="block p-2 hover:bg-white/5">
+                <Link href={`/library/${system.id}`} className="block p-2 transition-colors duration-200 hover:bg-white/5">
                   <FixtureSchematic profile={system.schematic} className="h-36 w-full" />
                   <p className="mt-2 font-heading text-lg leading-tight text-bone">{identityOf(system).company}</p>
                   <p className="mt-1 font-mono text-[11px] leading-tight text-bone/60">{system.system}</p>
@@ -166,7 +166,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="mx-auto grid max-w-6xl gap-8 px-4 py-14 sm:px-6 lg:grid-cols-[1fr_1fr] lg:gap-16">
+      <section className="mx-auto grid max-w-6xl gap-8 px-4 py-18 sm:px-6 lg:grid-cols-[1fr_1fr] lg:gap-16 lg:py-28">
         <div>
           <p className="kicker">Limits</p>
           <h2 className="mt-3 font-heading text-4xl leading-[0.95] tracking-tight">What this bench will not claim.</h2>
