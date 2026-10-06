@@ -43,6 +43,8 @@ export type RankedBrand = {
   systems: RankedSystem[];
   why: string;
   whyNot: string[];
+  /** Parametric DRR agreement for this company. Soft, and not a radiograph. */
+  shapeNote: string | null;
 };
 
 export type RankResult = {
@@ -59,5 +61,7 @@ export type RankResult = {
    * both contradict cues the dentist confirmed. The short list stays on screen.
    */
   libraryUnsure: { reason: string } | null;
+  /** Set when the best silhouette is not one of the two companies on screen. */
+  shapeAside: string | null;
   literature: LiteratureNote[];
 };

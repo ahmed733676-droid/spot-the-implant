@@ -2,6 +2,8 @@ import { DISTINCTIVE, hardCount, hasDistinctive, type EvidenceCue } from "@/lib/
 import { scoreEvidence, type Scored } from "@/lib/pipeline/graph";
 import type { RankedBrand, RankedSystem, RankResult } from "@/lib/pipeline/types";
 import { identityOf } from "@/lib/systems";
+import { shapeRankNudge } from "@/lib/twins/match";
+import type { ShapeHit } from "@/lib/twins/types";
 import type { ImplantSystem, Observation } from "@/lib/types";
 
 const CONFIDENCE_CAP = 0.92;
@@ -133,10 +135,19 @@ export function differentiate(input: {
   cues: readonly EvidenceCue[];
   observation: Observation;
   limit: number;
+  shapeHits?: readonly ShapeHit[];
 }): Omit<RankResult, "literature"> {
   const { observation, limit } = input;
   const answered = hardCount(input.cues);
+  const shapeHits = input.shapeHits ?? [];
   const scored = [...input.scored].sort(compareScored);
+  if (shapeHits.length > 0) {
+    for (const entry of scored) {
+      entry.rankScore += shapeRankNudge(entry.system.id, shapeHits);
+      entry.affinity = Math.min(1, entry.rankScore);
+    }
+    scored.sort(compareScored);
+  }
   const leader = scored[0];
   const second = scored[1] ?? null;
 
@@ -150,6 +161,7 @@ export function differentiate(input: {
       flat: false,
       clusterNote: "Mark at least one radiographic cue. With nothing marked, every system is equally possible.",
       libraryUnsure: null,
+      shapeAside: null,
     };
   }
 
@@ -304,8 +316,18 @@ export function differentiate(input: {
         .map((row) => withoutScore(row)),
       why,
       whyNot: dedupe(whyNot).slice(0, 4),
+      shapeNote: null,
     };
   });
+
+  const bestShape = shapeHits[0] ?? null;
+  if (bestShape && bestShape.score >= 0.62 && bestShape.libraryId) {
+    const matched = scored.find((entry) => entry.system.id === bestShape.libraryId);
+    const company = matched ? identityOf(matched.system).company : null;
+    for (const brand of draft) {
+      if (company && brand.company === company) brand.shapeNote = bestShape.sentence;
+    }
+  }
 
   const leaderBrand = draft[0];
   const runnerBrand = draft[1];
@@ -371,6 +393,9 @@ export function differentiate(input: {
 
   const brands: RankedBrand[] = draft.slice(0, Math.max(1, limit)).map((brand) => withoutScore(brand));
   const ranked: RankedSystem[] = presented.slice(0, limit).map((row) => withoutScore(row));
+  const shapeOnCard = brands.some((brand) => brand.shapeNote);
+  const shapeAside =
+    bestShape && bestShape.score >= 0.62 && bestShape.libraryId && !shapeOnCard ? bestShape.sentence : null;
   const libraryUnsure = unsureLibrary({
     cues: input.cues,
     scored,
@@ -389,6 +414,7 @@ export function differentiate(input: {
     flat,
     clusterNote,
     libraryUnsure,
+    shapeAside,
   };
 }
 

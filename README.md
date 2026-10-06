@@ -26,6 +26,7 @@ npm start
 - **Identify** — JPEG, PNG, WebP, or DICOM (uncompressed grayscale, or a single JPEG-compressed frame). Crop the fixture. Cues you set yourself are hard evidence. On-device measurements of neck, taper, thread, and apex stay soft, including after you accept them, and are labelled as image evidence. The company comes first. The line is secondary. When the confirmed cues fit no system, the two closest names stay up and the screen says the fixture may be outside the library.
 - **Library** — 26 systems with schematic silhouettes, checklist values, look-alikes, and public sources. No clinical radiograph is presented as a product photo.
 - **Labels** — Mark a result correct, wrong, unsure, or flag it for a specialist. The label (cues and verdict only, never the radiograph) stays in `localStorage`, capped at 200 rows. Export it as JSON from the results step.
+- **Shape match** — A parametric drawing of the common systems, built from catalog dimensions, is compared with the crop. Unknown dimensions stay marked estimated. The sentence on the card is a soft hint. It is not manufacturer CAD and not a radiograph. `npx tsx scripts/export-drr-dataset.ts ./data/drr` writes a labeled set for a future model. It does not train one.
 
 ## Accuracy, stated plainly
 
